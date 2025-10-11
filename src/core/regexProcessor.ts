@@ -52,7 +52,7 @@ export class RegexProcessor {
 					}
 					
 					const context = this.getContext(lines, i);
-					const replacementText = replacement || "";
+					const replacementText = replacement ? lineMatch[0].replace(new RegExp(pattern, flags), replacement) : lineMatch[0];
 
 					matches.push({
 						file,

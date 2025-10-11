@@ -19,7 +19,7 @@ export class FindReplaceView extends ItemView {
 	}
 
 	getIcon() {
-		return "scan";
+		return "replace";
 	}
 
 	async onOpen() {

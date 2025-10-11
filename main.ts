@@ -9,7 +9,7 @@ export default class AdvancedFindReplacePlugin extends Plugin {
 	async onload() {
 		this.registerView(
 			VIEW_TYPE_ADVANCED_FIND_REPLACE,
-			(leaf) => new FindReplaceView(leaf),
+			(leaf) => new FindReplaceView(leaf)
 		);
 
 		this.addCommand({
@@ -28,7 +28,7 @@ export default class AdvancedFindReplacePlugin extends Plugin {
 			},
 		});
 
-		this.addRibbonIcon("scan", "Advanced Find and Replace", () => {
+		this.addRibbonIcon("replace", "Advanced Find and Replace", () => {
 			this.activateView();
 		});
 	}

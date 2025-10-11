@@ -17,7 +17,7 @@ export class FindReplaceComponent {
 	private actions: FindReplaceActions;
 	private debounceTimer: NodeJS.Timeout | null = null;
 	private replacementSection: HTMLElement | null = null;
-	private isReplacementCollapsed: boolean = true;
+	private isReplacementCollapsed = true;
 
 	constructor(
 		containerEl: HTMLElement,
@@ -328,7 +328,7 @@ export class FindReplaceComponent {
 				cls: "match-count",
 			});
 
-			for (const match of fileMatches.slice(0, 3)) {
+			for (const match of fileMatches.slice(0, 10)) {
 				const matchEl = fileEl.createDiv("match-result");
 
 				const lineInfo = matchEl.createDiv("line-info");
@@ -338,20 +338,15 @@ export class FindReplaceComponent {
 				});
 
 				const contentEl = matchEl.createDiv("match-content");
-				const beforeEl = contentEl.createDiv("before");
-				beforeEl.createSpan({ text: match.before });
-
-				
-				if (state.replacement !== "") {
-					const afterEl = contentEl.createDiv("after");
-					afterEl.createSpan({ text: match.after });
-				}
+				contentEl.createSpan({ text: match.before });
+				contentEl.createEl("mark", { text: match.match });
+				contentEl.createSpan({ text: match.after });
 			}
 
-			if (fileMatches.length > 3) {
+			if (fileMatches.length > 10) {
 				const moreEl = fileEl.createDiv("more-matches");
 				moreEl.createSpan({
-					text: `+${fileMatches.length - 3} more`,
+					text: `+${fileMatches.length - 10} more`,
 				});
 			}
 		}
@@ -364,10 +359,12 @@ export class FindReplaceComponent {
 
 		for (const match of matches) {
 			const path = match.file.path;
-			if (!groups.has(path)) {
-				groups.set(path, []);
+			let group = groups.get(path);
+			if (!group) {
+				group = [];
+				groups.set(path, group);
 			}
-			groups.get(path)!.push(match);
+			group.push(match);
 		}
 
 		return groups;

@@ -25,54 +25,57 @@ export class RegexProcessor {
 		fileContents: FileContent[],
 		pattern: string,
 		replacement: string,
-		flags: string = "g",
+		flags = "g",
 	): ProcessResult {
 		const matches: MatchResult[] = [];
 		const affectedFiles: Set<TFile> = new Set();
+		let totalMatches = 0;
 
 		let regex: RegExp;
 		try {
-			regex = new RegExp(pattern, flags);
+			regex = new RegExp(pattern, flags.includes("g") ? flags : flags + "g");
 		} catch (error) {
 			return { matches: [], affectedFiles: [], totalMatches: 0 };
 		}
 
 		for (const { file, content } of fileContents) {
 			const lines = content.split("\n");
+			let fileHasMatch = false;
 
 			for (let i = 0; i < lines.length; i++) {
 				const line = lines[i];
-				if (regex.test(line)) {
-					regex.lastIndex = 0;
-					const match = line.match(regex);
+				let lineMatch: RegExpExecArray | null;
 
-					if (match) {
-						const replacementLine = line.replace(
-							regex,
-							replacement,
-						);
-						const context = this.getContext(lines, i);
-
-						matches.push({
-							file,
-							lineNumber: i + 1,
-							match: line,
-							replacement: replacementLine,
-							context: context.join("\n"),
-							before: line,
-							after: replacementLine,
-						});
-
-						affectedFiles.add(file);
+				while ((lineMatch = regex.exec(line)) !== null) {
+					if (lineMatch[0] === "" && regex.lastIndex > lineMatch.index) {
+						continue;
 					}
+					
+					const context = this.getContext(lines, i);
+					const replacementText = replacement || "";
+
+					matches.push({
+						file,
+						lineNumber: i + 1,
+						match: lineMatch[0],
+						replacement: replacementText,
+						context: context.join("\n"),
+						before: line.substring(0, lineMatch.index),
+						after: line.substring(lineMatch.index + lineMatch[0].length),
+					});
+					totalMatches++;
+					fileHasMatch = true;
 				}
+			}
+			if (fileHasMatch) {
+				affectedFiles.add(file);
 			}
 		}
 
 		return {
 			matches,
 			affectedFiles: Array.from(affectedFiles),
-			totalMatches: matches.length,
+			totalMatches,
 		};
 	}
 
@@ -80,7 +83,7 @@ export class RegexProcessor {
 		fileContents: FileContent[],
 		pattern: string,
 		replacement: string,
-		flags: string = "g",
+		flags = "g",
 	): Array<{ file: TFile; newContent: string }> {
 		const results: Array<{ file: TFile; newContent: string }> = [];
 

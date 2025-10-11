@@ -150,8 +150,7 @@ mark {
 }
 
 .match-result {
-	display: flex;
-	align-items: flex-start;
+	display: block;
 	padding: 2px 0;
 	border-bottom: 1px solid var(--background-modifier-border-hover);
 }
@@ -173,6 +172,12 @@ mark {
 	padding: 2px 8px;
 }
 
+.replaced-content {
+	padding-left: 1ch;
+	margin-top: 2px;
+	border-top: 1px dashed var(--background-modifier-border);
+}
+
 .before,
 .after {
 	font-family: var(--font-monospace);
@@ -188,8 +193,11 @@ mark {
 
 .after {
 	color: var(--text-success);
-	border-left: 2px solid var(--color-green);
-	padding-left: 6px;
+}
+
+.replaced-content .replaced {
+	background-color: rgba(0, 255, 0, 0.1);
+	color: var(--text-success);
 }
 
 .more-matches {

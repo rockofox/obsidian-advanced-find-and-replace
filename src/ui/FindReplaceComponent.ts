@@ -40,7 +40,7 @@ export class FindReplaceComponent {
 		this.createPreviewSection(this.containerEl);
 		this.createActionButtons(this.containerEl);
 
-		this.stateManager.subscribe((state) => {
+		this.stateManager.subscribe(() => {
 			this.updatePreview();
 			this.updateButtonStates();
 		});
@@ -341,6 +341,13 @@ export class FindReplaceComponent {
 				contentEl.createSpan({ text: match.before });
 				contentEl.createEl("mark", { text: match.match });
 				contentEl.createSpan({ text: match.after });
+
+				if (!this.isReplacementCollapsed) {
+					const replacedEl = matchEl.createDiv("replaced-content");
+					replacedEl.createSpan({ text: match.before });
+					replacedEl.createEl("mark", { text: match.replacement, cls: "replaced" });
+					replacedEl.createSpan({ text: match.after });
+				}
 			}
 
 			if (fileMatches.length > 10) {

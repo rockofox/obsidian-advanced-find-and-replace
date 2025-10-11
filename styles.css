@@ -1,0 +1,292 @@
+/* Advanced Find & Replace */
+.advanced-find-replace {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	padding: 8px;
+	font-size: 13px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+}
+
+.regex-input-section {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 8px;
+}
+
+.input-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.input-label {
+	min-width: 50px;
+	font-size: 12px;
+	color: var(--text-muted);
+	font-weight: 500;
+}
+
+.input-row input {
+	flex: 1;
+	padding: 4px 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 2px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: 13px;
+	font-family: var(--font-monospace);
+}
+
+.input-row input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 1px var(--interactive-accent);
+}
+
+.toggle-row {
+	margin: 4px 0;
+}
+
+.toggle-replace-btn {
+	background: none;
+	border: none;
+	padding: 8px 0;
+	font-size: 13px;
+	color: var(--text-muted);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 500;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.toggle-replace-btn:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+}
+
+.toggle-replace-btn::before {
+	content: "⌃";
+	transform: rotate(180deg);
+	font-size: 10px;
+	transition: transform 0.2s ease;
+	color: var(--text-accent);
+}
+
+/* When replacement section is hidden, rotate the chevron */
+.toggle-replace-btn.collapsed::before {
+	transform: rotate(0deg);
+}
+
+.replacement-section {
+	margin-top: 4px;
+}
+
+.replacement-section.hidden {
+	display: none;
+}
+
+.regex-preview-section {
+	margin-bottom: 8px;
+}
+
+.scan-status {
+	padding: 4px 8px;
+	font-size: 12px;
+	color: var(--text-muted);
+	background: var(--background-secondary);
+	border-radius: 2px;
+	margin-bottom: 4px;
+}
+
+.scan-status .error {
+	color: var(--text-error);
+}
+
+.scan-results {
+	flex: 1;
+	overflow-y: auto;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 2px;
+	background: var(--background-primary);
+}
+
+.file-result {
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.file-result:last-child {
+	border-bottom: none;
+}
+
+.file-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 6px 8px;
+	background: var(--background-secondary);
+	font-size: 12px;
+}
+
+.file-path {
+	color: var(--text-accent);
+	font-weight: 500;
+}
+
+.match-count {
+	color: var(--text-muted);
+	font-size: 11px;
+}
+
+.match-result {
+	display: flex;
+	align-items: flex-start;
+	padding: 2px 0;
+	border-bottom: 1px solid var(--background-modifier-border-hover);
+}
+
+.match-result:last-child {
+	border-bottom: none;
+}
+
+.line-info {
+	min-width: 40px;
+	padding: 2px 8px;
+	color: var(--text-muted);
+	font-size: 11px;
+	font-family: var(--font-monospace);
+	background: var(--background-secondary);
+}
+
+.match-content {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	padding: 2px 8px;
+}
+
+.before,
+.after {
+	font-family: var(--font-monospace);
+	font-size: 12px;
+	white-space: pre-wrap;
+	word-break: break-all;
+	line-height: 1.3;
+}
+
+.before {
+	color: var(--text-normal);
+}
+
+.after {
+	color: var(--text-success);
+	border-left: 2px solid var(--color-green);
+	padding-left: 6px;
+}
+
+.more-matches {
+	padding: 4px 8px;
+	font-style: italic;
+	color: var(--text-muted);
+	font-size: 11px;
+	text-align: center;
+	background: var(--background-secondary);
+}
+
+.regex-actions {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 8px;
+}
+
+.mode-toggle {
+	display: flex;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 2px;
+	overflow: hidden;
+}
+
+.mode-btn {
+	background: var(--background-primary);
+	border: none;
+	padding: 4px 12px;
+	font-size: 12px;
+	color: var(--text-muted);
+	cursor: pointer;
+	border-right: 1px solid var(--background-modifier-border);
+}
+
+.mode-btn:last-child {
+	border-right: none;
+}
+
+.mode-btn.active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.action-buttons {
+	display: flex;
+	gap: 4px;
+}
+
+.find-btn,
+.replace-btn,
+.cancel-btn {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 2px;
+	padding: 4px 12px;
+	font-size: 12px;
+	cursor: pointer;
+	background: var(--background-primary);
+	color: var(--text-normal);
+}
+
+.find-btn:hover,
+.replace-btn:hover {
+	background: var(--background-modifier-hover);
+}
+
+.replace-btn.mod-cta {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+.replace-btn.mod-cta:hover {
+	background: var(--interactive-accent-hover);
+}
+
+.cancel-btn {
+	padding: 4px 6px;
+	font-size: 14px;
+	color: var(--text-muted);
+}
+
+.cancel-btn:hover {
+	background: var(--background-modifier-error-hover);
+	color: var(--text-error);
+}
+
+.hidden {
+	display: none !important;
+}
+
+/* Hide default Obsidian setting styles */
+.advanced-find-replace .setting-item {
+	border: none;
+	padding: 0;
+	margin: 0;
+}
+
+.advanced-find-replace .setting-item-info,
+.advanced-find-replace .setting-item-control {
+	display: none;
+}

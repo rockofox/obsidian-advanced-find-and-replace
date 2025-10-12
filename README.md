@@ -10,3 +10,5 @@ I.e with live preview functionality.
 -   **Vault-Wide Search**: Search across all markdown files in your vault simultaneously
 -   **Before/After Display**: View the original text and replacement side by side
 -   **Contextual Preview**: Shows surrounding lines for better understanding of changes
+
+![Screenshot](assets/screenshot.png)

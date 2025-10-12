@@ -1,4 +1,4 @@
-import { App, Notice } from "obsidian";
+import { App, Notice, TFile, MarkdownView } from "obsidian";
 import { StateManager } from "../state";
 import { FileManager } from "../core/fileManager";
 import { RegexProcessor } from "../core/regexProcessor";
@@ -296,6 +296,13 @@ export class FindReplaceComponent {
 			return;
 		}
 
+		if (!state.regex || !state.fileContents) {
+			statusEl.innerHTML =
+				"<span>Enter a regex pattern to see results</span>";
+			resultsEl.style.display = "none";
+			return;
+		}
+
 		if (!state.scanResults) {
 			statusEl.innerHTML =
 				"<span>Enter a regex pattern to see results</span>";
@@ -328,6 +335,14 @@ export class FindReplaceComponent {
 				cls: "match-count",
 			});
 
+			// Make file header clickable to open the file
+			fileHeader.addEventListener("click", () => {
+				const fileContent = state.fileContents?.find(f => f.file.path === filePath);
+				if (fileContent?.file) {
+					this.openFile(fileContent.file, fileMatches[0]?.lineNumber ?? 1);
+				}
+			});
+
 			for (const match of fileMatches.slice(0, 10)) {
 				const matchEl = fileEl.createDiv("match-result");
 
@@ -341,6 +356,14 @@ export class FindReplaceComponent {
 				contentEl.createSpan({ text: match.before });
 				contentEl.createEl("mark", { text: match.match });
 				contentEl.createSpan({ text: match.after });
+
+				// Make match content clickable to open the file at the specific line
+				matchEl.addEventListener("click", () => {
+					const fileContent = state.fileContents?.find(f => f.file.path === filePath);
+					if (fileContent?.file) {
+						this.openFile(fileContent.file, match.lineNumber);
+					}
+				});
 
 				if (!this.isReplacementCollapsed) {
 					const replacedEl = matchEl.createDiv("replaced-content");
@@ -414,6 +437,20 @@ export class FindReplaceComponent {
 			);
 		} else {
 			new Notice("No matches found");
+		}
+	}
+
+	private async openFile(file: TFile, lineNumber: number) {
+		// Open the file in a new leaf
+		const leaf = this.app.workspace.getLeaf(true);
+		await leaf.openFile(file);
+		
+		// Scroll to the specific line
+		const editor = this.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
+		if (editor) {
+			const line = Math.max(0, lineNumber - 1); // Convert to 0-based index
+			editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
+			editor.setCursor({ line, ch: 0 });
 		}
 	}
 

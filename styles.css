@@ -132,6 +132,12 @@
 	padding: 6px 8px;
 	background: var(--background-secondary);
 	font-size: 12px;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.file-header:hover {
+	background: var(--background-modifier-hover);
 }
 
 .file-path {
@@ -153,6 +159,12 @@ mark {
 	display: block;
 	padding: 2px 0;
 	border-bottom: 1px solid var(--background-modifier-border-hover);
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.match-result:hover {
+	background: var(--background-modifier-hover);
 }
 
 .match-result:last-child {

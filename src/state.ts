@@ -5,6 +5,7 @@ export interface PluginState {
 	regex: string;
 	replacement: string;
 	flags: string;
+	adjustCase: boolean;
 	isScanning: boolean;
 	scanResults: ProcessResult | null;
 	fileContents: FileContent[] | null;
@@ -16,6 +17,7 @@ export class StateManager {
 		regex: "",
 		replacement: "",
 		flags: "g",
+		adjustCase: false,
 		isScanning: false,
 		scanResults: null,
 		fileContents: null,
@@ -43,6 +45,10 @@ export class StateManager {
 
 	setFlags(flags: string): void {
 		this.setState({ flags });
+	}
+
+	setAdjustCase(adjustCase: boolean): void {
+		this.setState({ adjustCase });
 	}
 
 	setScanning(isScanning: boolean): void {
@@ -82,6 +88,7 @@ export class StateManager {
 			regex: "",
 			replacement: "",
 			flags: "g",
+			adjustCase: false,
 			isScanning: false,
 			scanResults: null,
 			fileContents: null,

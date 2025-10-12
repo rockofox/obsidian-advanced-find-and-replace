@@ -145,6 +145,28 @@ export class FindReplaceComponent {
 				this.handleEnterKey();
 			}
 		});
+		
+		const caseAdjustContainer = this.replacementSection.createDiv("case-adjust-container");
+		const caseAdjustCheckbox = caseAdjustContainer.createEl("input", {
+			type: "checkbox",
+			cls: "case-adjust-checkbox",
+		});
+		caseAdjustCheckbox.checked = this.stateManager.getState().adjustCase;
+		caseAdjustCheckbox.addEventListener("change", (e) => {
+			const checked = (e.target as HTMLInputElement).checked;
+			this.stateManager.setAdjustCase(checked);
+			this.debouncedScan();
+		});
+		
+		const caseAdjustLabel = caseAdjustContainer.createEl("label", {
+			text: "Match case of original text",
+			cls: "case-adjust-label",
+		});
+		caseAdjustLabel.addEventListener("click", () => {
+			caseAdjustCheckbox.checked = !caseAdjustCheckbox.checked;
+			this.stateManager.setAdjustCase(caseAdjustCheckbox.checked);
+			this.debouncedScan();
+		});
 	}
 
 	private toggleReplacementSection() {
@@ -266,6 +288,7 @@ export class FindReplaceComponent {
 				state.regex,
 				state.replacement,
 				state.flags,
+				state.adjustCase,
 			);
 			this.stateManager.setScanResults(results);
 		} catch (error) {
@@ -466,6 +489,7 @@ export class FindReplaceComponent {
 			state.regex,
 			state.replacement,
 			state.flags,
+			state.adjustCase,
 		);
 
 		if (modifications.length === 0) {

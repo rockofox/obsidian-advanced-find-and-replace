@@ -17,15 +17,47 @@ export interface ProcessResult {
 	totalMatches: number;
 }
 
+export enum CaseMode {
+	None = "none",
+	LowerCase = "lower",
+	UpperCase = "upper",
+	TitleCase = "title",
+	SentenceCase = "sentence"
+}
+
 export class RegexProcessor {
 	private static readonly CONTEXT_LINES = 2;
 	private static readonly SNIPPET_LENGTH = 200;
+
+	private adjustCase(original: string, replacement: string): string {
+		if (!original || !replacement) return replacement;
+
+		// Check if original is all uppercase
+		if (original === original.toUpperCase() && original !== original.toLowerCase()) {
+			return replacement.toUpperCase();
+		}
+		
+		// Check if original is all lowercase
+		if (original === original.toLowerCase() && original !== original.toUpperCase()) {
+			return replacement.toLowerCase();
+		}
+		
+		// Check if original is title case (first letter capitalized)
+		if (original.charAt(0) === original.charAt(0).toUpperCase() && 
+			original.slice(1) === original.slice(1).toLowerCase()) {
+			return replacement.charAt(0).toUpperCase() + replacement.slice(1).toLowerCase();
+		}
+		
+		// Default: return as is
+		return replacement;
+	}
 
 	processFiles(
 		fileContents: FileContent[],
 		pattern: string,
 		replacement: string,
 		flags = "g",
+		adjustCase = false,
 	): ProcessResult {
 		const matches: MatchResult[] = [];
 		const affectedFiles: Set<TFile> = new Set();
@@ -52,7 +84,12 @@ export class RegexProcessor {
 					}
 					
 					const context = this.getContext(lines, i);
-					const replacementText = replacement ? lineMatch[0].replace(new RegExp(pattern, flags), replacement) : lineMatch[0];
+					let replacementText = replacement ? lineMatch[0].replace(new RegExp(pattern, flags), replacement) : lineMatch[0];
+					
+					// Adjust case if needed
+					if (adjustCase && replacement) {
+						replacementText = this.adjustCase(lineMatch[0], replacementText);
+					}
 
 					matches.push({
 						file,
@@ -84,6 +121,7 @@ export class RegexProcessor {
 		pattern: string,
 		replacement: string,
 		flags = "g",
+		adjustCase = false,
 	): Array<{ file: TFile; newContent: string }> {
 		const results: Array<{ file: TFile; newContent: string }> = [];
 
@@ -95,7 +133,17 @@ export class RegexProcessor {
 		}
 
 		for (const { file, content } of fileContents) {
-			const newContent = content.replace(regex, replacement);
+			let newContent: string;
+			
+			if (adjustCase && replacement) {
+				// For case adjustment, we need to process each match individually
+				newContent = content.replace(regex, (match) => {
+					const replacementText = match.replace(new RegExp(pattern, flags), replacement);
+					return this.adjustCase(match, replacementText);
+				});
+			} else {
+				newContent = content.replace(regex, replacement);
+			}
 
 			if (newContent !== content) {
 				results.push({ file, newContent });

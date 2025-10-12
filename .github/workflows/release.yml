@@ -1,0 +1,39 @@
+name: Release Obsidian plugin
+
+on:
+  push:
+    tags:
+      - "*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
+
+      - name: Build plugin
+        run: |
+          npm install
+          npm run build
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          mkdir obsidian-find-replace
+          cp dist/* manifest.json obsidian-find-replace/
+          zip -r obsidian-find-replace.zip obsidian-find-replace
+
+          gh release create "$tag" \
+            --title="$tag" \
+            --draft \
+            obsidian-find-replace.zip

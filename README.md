@@ -1,7 +1,6 @@
 # Advanced Find and Replace Plugin for Obsidian
 
-An Obsidian plugin that enables you to find and replace text using regular expressions across all files.
-I.e with live preview functionality.
+Find and replace text across your vault using regular expressions, with advanced features like capturing groups and a live preview.
 
 ## Features
 

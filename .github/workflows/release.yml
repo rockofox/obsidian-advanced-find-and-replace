@@ -36,4 +36,4 @@ jobs:
           gh release create "$tag" \
             --title="$tag" \
             --draft \
-            obsidian-find-replace.zip
+            obsidian-find-replace.zip dist/* manifest.json

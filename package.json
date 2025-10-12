@@ -1,6 +1,6 @@
 {
-	"name": "advanced-find-replace",
-	"version": "1.0.0",
+	"name": "advanced-find-and-replace",
+	"version": "0.0.1",
 	"description": "An advanced tool for finding and replacing text across all files in your vault, with live preview and regular expression support.",
 	"main": "main.js",
 	"scripts": {

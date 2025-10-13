@@ -223,7 +223,7 @@ export class FindReplaceComponent {
 
 		const resultsEl = previewContainer.createDiv("scan-results");
 		resultsEl.id = "regex-results";
-		resultsEl.style.display = "none";
+		resultsEl.addClass("hidden");
 	}
 
 	private createActionButtons(container: HTMLElement) {
@@ -308,43 +308,56 @@ export class FindReplaceComponent {
 		if (!statusEl || !resultsEl) return;
 
 		if (state.isScanning) {
-			statusEl.innerHTML = "<span>Searching...</span>";
-			resultsEl.style.display = "none";
+			statusEl.empty();
+			statusEl.createSpan({ text: "Searching..." });
+			resultsEl.removeClass("visible");
+			resultsEl.addClass("hidden");
 			return;
 		}
 
 		if (state.error) {
-			statusEl.innerHTML = `<span class="error">${state.error}</span>`;
-			resultsEl.style.display = "none";
+			statusEl.empty();
+			const errorSpan = statusEl.createSpan({ text: state.error });
+			errorSpan.addClass("error");
+			resultsEl.removeClass("visible");
+			resultsEl.addClass("hidden");
 			return;
 		}
 
 		if (!state.regex || !state.fileContents) {
-			statusEl.innerHTML =
-				"<span>Enter a regex pattern to see results</span>";
-			resultsEl.style.display = "none";
+			statusEl.empty();
+			statusEl.createSpan({ text: "Enter a regex pattern to see results" });
+			resultsEl.removeClass("visible");
+			resultsEl.addClass("hidden");
 			return;
 		}
 
 		if (!state.scanResults) {
-			statusEl.innerHTML =
-				"<span>Enter a regex pattern to see results</span>";
-			resultsEl.style.display = "none";
+			statusEl.empty();
+			statusEl.createSpan({ text: "Enter a regex pattern to see results" });
+			resultsEl.removeClass("visible");
+			resultsEl.addClass("hidden");
 			return;
 		}
 
 		const { matches, totalMatches } = state.scanResults;
 
 		if (totalMatches === 0) {
-			statusEl.innerHTML = "<span>No results</span>";
-			resultsEl.style.display = "none";
+			statusEl.empty();
+			statusEl.createSpan({ text: "No results" });
+			resultsEl.removeClass("visible");
+			resultsEl.addClass("hidden");
 			return;
 		}
 
-		statusEl.innerHTML = `<span>${totalMatches} results in ${state.scanResults.affectedFiles.length} file${state.scanResults.affectedFiles.length !== 1 ? "s" : ""}</span>`;
+		statusEl.empty();
+		statusEl.createSpan({
+			text: `${totalMatches} results in ${state.scanResults.affectedFiles.length} file${state.scanResults.affectedFiles.length !== 1 ? "s" : ""}`
+		});
 
 		resultsEl.empty();
-		resultsEl.style.display = "block";
+		resultsEl.removeClass("hidden");
+		resultsEl.addClass("visible");
 
 		const fileGroups = this.groupMatchesByFile(matches);
 

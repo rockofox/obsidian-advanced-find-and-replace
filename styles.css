@@ -137,6 +137,14 @@
 	background: var(--background-primary);
 }
 
+.scan-results.hidden {
+	display: none;
+}
+
+.scan-results.visible {
+	display: block;
+}
+
 .file-result {
 	border-bottom: 1px solid var(--background-modifier-border);
 }

@@ -115,7 +115,7 @@ export class FindReplaceComponent {
 		
 		const toggleReplace = inputContainer.createDiv("toggle-row");
 		const toggleBtn = toggleReplace.createEl("div", {
-			text: "Replace",
+			text: "Replace options",
 			cls: "toggle-replace-btn collapsed",
 		});
 		toggleBtn.onclick = () => this.toggleReplacementSection();
@@ -233,7 +233,7 @@ export class FindReplaceComponent {
 		const actionContainer = buttonContainer.createDiv("action-buttons");
 
 		const replaceBtn = actionContainer.createEl("button", {
-			text: "Replace",
+			text: "Replace all",
 			cls: "replace-btn mod-cta",
 		});
 		replaceBtn.id = "apply-button";
@@ -420,7 +420,7 @@ export class FindReplaceComponent {
 					// Add individual replace button with better styling
 					const buttonContainer = matchEl.createDiv("replace-button-container");
 					const replaceBtn = buttonContainer.createEl("button", {
-						text: "Replace",
+						text: "Replace this",
 						cls: "replace-single-btn mod-cta",
 					});
 					replaceBtn.onclick = (e) => {
@@ -555,7 +555,7 @@ export class FindReplaceComponent {
 
 		if (!state.fileContents || !state.regex) {
 			if (button) {
-				button.setText("Replace");
+				button.setText("Replace this");
 				button.disabled = false;
 			}
 			return;
@@ -570,7 +570,7 @@ export class FindReplaceComponent {
 			if (lineIndex >= currentLines.length) {
 				new Notice("Line not found");
 				if (button) {
-					button.setText("Replace");
+					button.setText("Replace this");
 					button.disabled = false;
 				}
 				return;
@@ -584,7 +584,7 @@ export class FindReplaceComponent {
 				line.substring(match.startIndex, match.endIndex) !== match.match) {
 				new Notice("Match not found at expected position - file may have changed");
 				if (button) {
-					button.setText("Replace");
+					button.setText("Replace this");
 					button.disabled = false;
 				}
 				// Rescan to update the preview
@@ -618,7 +618,7 @@ export class FindReplaceComponent {
 				// Reset button after a delay
 				setTimeout(() => {
 					if (button.parentNode) { // Check if button still exists in DOM
-						button.setText("Replace");
+						button.setText("Replace this");
 						button.removeClass("replaced-success");
 						button.disabled = false;
 					}
@@ -635,7 +635,7 @@ export class FindReplaceComponent {
 			new Notice("Error replacing match");
 			// Reset button on error
 			if (button) {
-				button.setText("Replace");
+				button.setText("Replace this");
 				button.disabled = false;
 			}
 		}

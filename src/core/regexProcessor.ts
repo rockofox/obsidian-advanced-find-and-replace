@@ -9,6 +9,8 @@ export interface MatchResult {
 	context: string;
 	before: string;
 	after: string;
+	startIndex: number; // Position of the match within the line
+	endIndex: number;   // End position of the match within the line
 }
 
 export interface ProcessResult {
@@ -99,6 +101,8 @@ export class RegexProcessor {
 						context: context.join("\n"),
 						before: line.substring(0, lineMatch.index),
 						after: line.substring(lineMatch.index + lineMatch[0].length),
+						startIndex: lineMatch.index,
+						endIndex: lineMatch.index + lineMatch[0].length,
 					});
 					totalMatches++;
 					fileHasMatch = true;

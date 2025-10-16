@@ -218,6 +218,37 @@ mark {
 	border-top: 1px dashed var(--background-modifier-border);
 }
 
+.replace-single-btn {
+	float: right;
+	margin: 2px 4px;
+	padding: 2px 6px;
+	font-size: 11px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 2px;
+	cursor: pointer;
+}
+
+.replace-single-btn:hover {
+	background: var(--interactive-accent-hover);
+}
+
+.replace-single-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.replace-single-btn.replaced-success {
+	background: var(--text-success);
+}
+
+.replace-button-container {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: 4px;
+}
+
 .before,
 .after {
 	font-family: var(--font-monospace);

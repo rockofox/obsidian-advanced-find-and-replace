@@ -199,6 +199,9 @@ export class FindReplaceComponent {
 			if (replaceBtn) {
 				replaceBtn.removeClass("hidden");
 			}
+
+			// Trigger a scan to update the preview when opening the replacement section
+			this.debouncedScan();
 		}
 	}
 
@@ -208,7 +211,7 @@ export class FindReplaceComponent {
 			return;
 		}
 
-		if (this.isReplacementCollapsed || !state.replacement) {
+		if (this.isReplacementCollapsed) {
 			this.searchOnly();
 		} else {
 			this.applyChanges();

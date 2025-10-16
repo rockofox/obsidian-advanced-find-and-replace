@@ -86,7 +86,7 @@ export class RegexProcessor {
 					}
 					
 					const context = this.getContext(lines, i);
-					let replacementText = replacement ? lineMatch[0].replace(new RegExp(pattern, flags), replacement) : lineMatch[0];
+					let replacementText = lineMatch[0].replace(new RegExp(pattern, flags), replacement || "");
 					
 					// Adjust case if needed
 					if (adjustCase && replacement) {

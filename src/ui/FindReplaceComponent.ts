@@ -256,6 +256,16 @@ export class FindReplaceComponent {
 		}
 	}
 
+	private async refreshFileContents() {
+		try {
+			const fileContents = await this.fileManager.getAllMarkdownFiles();
+			this.stateManager.setFileContents(fileContents);
+		} catch (error) {
+			this.stateManager.setError("Failed to refresh vault files");
+			new Notice("Error refreshing vault files");
+		}
+	}
+
 	private debouncedScan() {
 		if (this.debounceTimer) {
 			clearTimeout(this.debounceTimer);
@@ -406,6 +416,20 @@ export class FindReplaceComponent {
 					replacedEl.createSpan({ text: match.before });
 					replacedEl.createEl("mark", { text: match.replacement, cls: "replaced" });
 					replacedEl.createSpan({ text: match.after });
+
+					// Add individual replace button with better styling
+					const buttonContainer = matchEl.createDiv("replace-button-container");
+					const replaceBtn = buttonContainer.createEl("button", {
+						text: "Replace",
+						cls: "replace-single-btn mod-cta",
+					});
+					replaceBtn.onclick = (e) => {
+						e.stopPropagation();
+						// Add visual feedback that replacement is in progress
+						replaceBtn.setText("Replacing...");
+						replaceBtn.disabled = true;
+						this.replaceSingleMatch(match, replaceBtn);
+					};
 				}
 			}
 
@@ -515,8 +539,105 @@ export class FindReplaceComponent {
 			new Notice(
 				`Successfully updated ${modifications.length} file${modifications.length !== 1 ? "s" : ""}`,
 			);
+
+			// Refresh file contents to reflect the changes
+			await this.refreshFileContents();
+
+			// Rescan to update the preview after changes
+			this.performScan();
 		} catch (error: unknown) {
 			new Notice("Error applying changes");
+		}
+	}
+
+	private async replaceSingleMatch(match: MatchResult, button?: HTMLButtonElement) {
+		const state = this.stateManager.getState();
+
+		if (!state.fileContents || !state.regex) {
+			if (button) {
+				button.setText("Replace");
+				button.disabled = false;
+			}
+			return;
+		}
+
+		try {
+			// Read the current file content directly from disk to ensure we have the latest version
+			const currentContent = await this.app.vault.read(match.file);
+			const currentLines = currentContent.split("\n");
+			const lineIndex = match.lineNumber - 1; // Convert to 0-based index
+
+			if (lineIndex >= currentLines.length) {
+				new Notice("Line not found");
+				if (button) {
+					button.setText("Replace");
+					button.disabled = false;
+				}
+				return;
+			}
+
+			// Get the current line
+			const line = currentLines[lineIndex];
+
+			// Verify that the match still exists at the expected position
+			if (line.length < match.endIndex ||
+				line.substring(match.startIndex, match.endIndex) !== match.match) {
+				new Notice("Match not found at expected position - file may have changed");
+				if (button) {
+					button.setText("Replace");
+					button.disabled = false;
+				}
+				// Rescan to update the preview
+				this.performScan();
+				return;
+			}
+
+			// Apply case adjustment if needed
+			let replacementText = match.replacement;
+			if (state.adjustCase && state.replacement) {
+				replacementText = this.regexProcessor["adjustCase"](match.match, match.replacement);
+			}
+
+			// Replace only this specific match on this line using position information
+			const newLine = line.substring(0, match.startIndex) +
+						  replacementText +
+						  line.substring(match.endIndex);
+
+			currentLines[lineIndex] = newLine;
+			const newContent = currentLines.join("\n");
+
+			// Save the modified content
+			await this.fileManager.modifyFile(match.file, newContent);
+
+			new Notice("Match replaced successfully");
+
+			// Provide visual feedback on success
+			if (button) {
+				button.setText("Replaced!");
+				button.addClass("replaced-success");
+				// Reset button after a delay
+				setTimeout(() => {
+					if (button.parentNode) { // Check if button still exists in DOM
+						button.setText("Replace");
+						button.removeClass("replaced-success");
+						button.disabled = false;
+					}
+				}, 1000);
+			}
+
+			// Refresh file contents to reflect the changes
+			await this.refreshFileContents();
+
+			// Rescan to update the preview
+			this.performScan();
+		} catch (error) {
+			console.error("Error replacing single match:", error);
+			new Notice("Error replacing match");
+			// Reset button on error
+			if (button) {
+				button.setText("Replace");
+				button.disabled = false;
+			}
 		}
 	}
 }

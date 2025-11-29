@@ -78,12 +78,27 @@ export class RegexProcessor {
 
 			for (let i = 0; i < lines.length; i++) {
 				const line = lines[i];
+				// Reset lastIndex for each line to prevent issues with global regex
+				regex.lastIndex = 0;
 				let lineMatch: RegExpExecArray | null;
+				let lastMatchIndex = -1;
 
 				while ((lineMatch = regex.exec(line)) !== null) {
-					if (lineMatch[0] === "" && regex.lastIndex > lineMatch.index) {
-						continue;
+					// Prevent infinite loops with zero-width matches
+					if (lineMatch[0] === "") {
+						// If we matched at the same position twice, advance to prevent infinite loop
+						if (regex.lastIndex === lastMatchIndex) {
+							regex.lastIndex++;
+						}
+						// Skip empty matches that don't advance the position
+						if (regex.lastIndex <= lineMatch.index) {
+							regex.lastIndex = lineMatch.index + 1;
+							continue;
+						}
 					}
+					
+					// Update lastMatchIndex for non-empty matches or successfully handled empty matches
+					lastMatchIndex = regex.lastIndex;
 					
 					const context = this.getContext(lines, i);
 					let replacementText = lineMatch[0].replace(new RegExp(pattern, flags), replacement || "");

@@ -3,7 +3,7 @@
 	"name": "Advanced Find & Replace",
 	"version": "0.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "An advanced tool for finding and replacing text across all files in your vault, with live preview and regular expression support.",
+	"description": "Find and replace text across your vault using regular expressions, with advanced features like capturing groups and a live preview.",
 	"author": "rockofox",
 	"authorUrl": "https://fox.boo",
 	"fundingUrl": "https://github.com/sponsors/rockofox",

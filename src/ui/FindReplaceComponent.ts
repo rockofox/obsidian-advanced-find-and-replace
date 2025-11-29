@@ -45,7 +45,7 @@ export class FindReplaceComponent {
 			this.updateButtonStates();
 		});
 
-		this.loadFileContents();
+		void this.loadFileContents();
 
 		
 		const applyButton = this.containerEl.querySelector(
@@ -214,7 +214,7 @@ export class FindReplaceComponent {
 		if (this.isReplacementCollapsed) {
 			this.searchOnly();
 		} else {
-			this.applyChanges();
+			void this.applyChanges();
 		}
 	}
 
@@ -240,7 +240,7 @@ export class FindReplaceComponent {
 			cls: "replace-btn mod-cta",
 		});
 		replaceBtn.id = "apply-button";
-		replaceBtn.onclick = () => this.applyChanges();
+		replaceBtn.onclick = () => void this.applyChanges();
 
 		
 		replaceBtn.addClass("hidden");
@@ -251,7 +251,7 @@ export class FindReplaceComponent {
 		try {
 			const fileContents = await this.fileManager.getAllMarkdownFiles();
 			this.stateManager.setFileContents(fileContents);
-		} catch (error) {
+		} catch {
 			this.stateManager.setError("Failed to load vault files");
 			new Notice("Error loading vault files");
 		} finally {
@@ -263,7 +263,7 @@ export class FindReplaceComponent {
 		try {
 			const fileContents = await this.fileManager.getAllMarkdownFiles();
 			this.stateManager.setFileContents(fileContents);
-		} catch (error) {
+		} catch {
 			this.stateManager.setError("Failed to refresh vault files");
 			new Notice("Error refreshing vault files");
 		}
@@ -275,11 +275,11 @@ export class FindReplaceComponent {
 		}
 
 		this.debounceTimer = setTimeout(() => {
-			this.performScan();
+			void this.performScan();
 		}, 300);
 	}
 
-	private async performScan() {
+	private performScan() {
 		const state = this.stateManager.getState();
 
 		if (!state.regex || !state.fileContents) {
@@ -304,7 +304,7 @@ export class FindReplaceComponent {
 				state.adjustCase,
 			);
 			this.stateManager.setScanResults(results);
-		} catch (error) {
+		} catch {
 			this.stateManager.setError("Error scanning files");
 		} finally {
 			this.stateManager.setScanning(false);
@@ -388,7 +388,7 @@ export class FindReplaceComponent {
 			fileHeader.addEventListener("click", () => {
 				const fileContent = state.fileContents?.find(f => f.file.path === filePath);
 				if (fileContent?.file) {
-					this.openFile(fileContent.file, fileMatches[0]?.lineNumber ?? 1);
+					void this.openFile(fileContent.file, fileMatches[0]?.lineNumber ?? 1);
 				}
 			});
 
@@ -410,7 +410,7 @@ export class FindReplaceComponent {
 				matchEl.addEventListener("click", () => {
 					const fileContent = state.fileContents?.find(f => f.file.path === filePath);
 					if (fileContent?.file) {
-						this.openFile(fileContent.file, match.lineNumber);
+						void this.openFile(fileContent.file, match.lineNumber);
 					}
 				});
 
@@ -431,7 +431,7 @@ export class FindReplaceComponent {
 						// Add visual feedback that replacement is in progress
 						replaceBtn.setText("Replacing...");
 						replaceBtn.disabled = true;
-						this.replaceSingleMatch(match, replaceBtn);
+						void this.replaceSingleMatch(match, replaceBtn);
 					};
 				}
 			}
@@ -547,8 +547,8 @@ export class FindReplaceComponent {
 			await this.refreshFileContents();
 
 			// Rescan to update the preview after changes
-			this.performScan();
-		} catch (error: unknown) {
+			void this.performScan();
+		} catch {
 			new Notice("Error applying changes");
 		}
 	}
@@ -591,7 +591,7 @@ export class FindReplaceComponent {
 					button.disabled = false;
 				}
 				// Rescan to update the preview
-				this.performScan();
+				void this.performScan();
 				return;
 			}
 
@@ -632,7 +632,7 @@ export class FindReplaceComponent {
 			await this.refreshFileContents();
 
 			// Rescan to update the preview
-			this.performScan();
+			void this.performScan();
 		} catch (error) {
 			console.error("Error replacing single match:", error);
 			new Notice("Error replacing match");

@@ -6,30 +6,30 @@ import {
 } from "./src/ui/FindReplaceView";
 
 export default class AdvancedFindReplacePlugin extends Plugin {
-	async onload() {
+	onload() {
 		this.registerView(
 			VIEW_TYPE_ADVANCED_FIND_REPLACE,
 			(leaf) => new FindReplaceView(leaf)
 		);
 
 		this.addCommand({
-			id: "advanced-find-and-replace-modal",
-			name: "Advanced Find and Replace (Modal)",
+			id: "modal",
+			name: "Advanced find and replace (modal)",
 			callback: () => {
 				new FindReplaceModal(this.app).open();
 			},
 		});
 
 		this.addCommand({
-			id: "advanced-find-and-replace-split",
-			name: "Advanced Find and Replace (Split View)",
+			id: "split",
+			name: "Advanced find and replace (split view)",
 			callback: () => {
-				this.activateView();
+				void this.activateView();
 			},
 		});
 
-		this.addRibbonIcon("replace", "Advanced Find and Replace", () => {
-			this.activateView();
+		this.addRibbonIcon("replace", "Advanced find and replace", () => {
+			void this.activateView();
 		});
 	}
 

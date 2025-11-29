@@ -68,7 +68,7 @@ export class RegexProcessor {
 		let regex: RegExp;
 		try {
 			regex = new RegExp(pattern, flags.includes("g") ? flags : flags + "g");
-		} catch (error) {
+		} catch {
 			return { matches: [], affectedFiles: [], totalMatches: 0 };
 		}
 
@@ -132,7 +132,7 @@ export class RegexProcessor {
 		let regex: RegExp;
 		try {
 			regex = new RegExp(pattern, flags);
-		} catch (error) {
+		} catch {
 			return [];
 		}
 

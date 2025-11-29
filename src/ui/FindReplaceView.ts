@@ -15,14 +15,14 @@ export class FindReplaceView extends ItemView {
 	}
 
 	getDisplayText() {
-		return "Advanced Find and Replace";
+		return "Advanced find and replace";
 	}
 
 	getIcon() {
 		return "replace";
 	}
 
-	async onOpen() {
+	onOpen() {
 		const container = this.containerEl.children[1] as HTMLElement;
 		container.empty();
 		container.addClass("advanced-find-and-replace-view");
@@ -36,7 +36,7 @@ export class FindReplaceView extends ItemView {
 		this.component.onLoad();
 	}
 
-	async onClose() {
+	onClose() {
 		if (this.component) {
 			this.component.onUnload();
 			this.component = null;

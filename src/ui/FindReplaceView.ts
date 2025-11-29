@@ -22,7 +22,8 @@ export class FindReplaceView extends ItemView {
 		return "replace";
 	}
 
-	onOpen() {
+	async onOpen() {
+		await Promise.resolve();
 		const container = this.containerEl.children[1] as HTMLElement;
 		container.empty();
 		container.addClass("advanced-find-and-replace-view");
@@ -36,7 +37,8 @@ export class FindReplaceView extends ItemView {
 		this.component.onLoad();
 	}
 
-	onClose() {
+	async onClose() {
+		await Promise.resolve();
 		if (this.component) {
 			this.component.onUnload();
 			this.component = null;

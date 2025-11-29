@@ -14,7 +14,7 @@ describe("FindReplaceView", () => {
 			detach: vi.fn(),
 		} as unknown as WorkspaceLeaf;
 		view = new FindReplaceView(mockLeaf);
-		view.app = mockApp;
+		view.app = mockApp as any;
 	});
 
 	describe("constructor", () => {

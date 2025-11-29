@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { StateManager } from "./state";
+import { StateManager, PluginState } from "./state";
 import { ProcessResult } from "./core/regexProcessor";
 import { FileContent } from "./core/fileManager";
 import { createMockTFile } from "../tests/helpers/mockObsidian";
@@ -173,7 +173,7 @@ describe("StateManager", () => {
 
 	describe("subscribe", () => {
 		it("should notify listeners when state changes", () => {
-			let notifiedState = null;
+			let notifiedState: PluginState | null = null;
 			stateManager.subscribe((state) => {
 				notifiedState = state;
 			});
@@ -181,7 +181,7 @@ describe("StateManager", () => {
 			stateManager.setRegex("test");
 
 			expect(notifiedState).not.toBeNull();
-			expect(notifiedState?.regex).toBe("test");
+			expect(notifiedState!.regex).toBe("test");
 		});
 
 		it("should notify multiple listeners", () => {
@@ -219,15 +219,16 @@ describe("StateManager", () => {
 		it("should pass current state to listener", () => {
 			stateManager.setRegex("initial");
 
-			let receivedState = null;
+			let receivedState: PluginState | null = null;
 			stateManager.subscribe((state) => {
 				receivedState = state;
 			});
 
 			stateManager.setReplacement("new");
 
-			expect(receivedState?.regex).toBe("initial");
-			expect(receivedState?.replacement).toBe("new");
+			expect(receivedState).not.toBeNull();
+			expect(receivedState!.regex).toBe("initial");
+			expect(receivedState!.replacement).toBe("new");
 		});
 	});
 
@@ -259,7 +260,7 @@ describe("StateManager", () => {
 		});
 
 		it("should notify listeners on reset", () => {
-			let notifiedState = null;
+			let notifiedState: PluginState | null = null;
 			stateManager.subscribe((state) => {
 				notifiedState = state;
 			});
@@ -268,7 +269,7 @@ describe("StateManager", () => {
 			stateManager.reset();
 
 			expect(notifiedState).not.toBeNull();
-			expect(notifiedState?.regex).toBe("");
+			expect(notifiedState!.regex).toBe("");
 		});
 	});
 });

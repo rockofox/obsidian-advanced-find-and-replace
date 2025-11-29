@@ -10,6 +10,9 @@ export interface PluginState {
 	scanResults: ProcessResult | null;
 	fileContents: FileContent[] | null;
 	error: string | null;
+	progressCurrent: number;
+	progressTotal: number;
+	progressMessage: string | null;
 }
 
 export class StateManager {
@@ -22,6 +25,9 @@ export class StateManager {
 		scanResults: null,
 		fileContents: null,
 		error: null,
+		progressCurrent: 0,
+		progressTotal: 0,
+		progressMessage: null,
 	};
 
 	private listeners: Array<(state: PluginState) => void> = [];
@@ -67,6 +73,26 @@ export class StateManager {
 		this.setState({ error });
 	}
 
+	setProgress(
+		current: number,
+		total: number,
+		message: string | null = null,
+	): void {
+		this.setState({
+			progressCurrent: current,
+			progressTotal: total,
+			progressMessage: message,
+		});
+	}
+
+	clearProgress(): void {
+		this.setState({
+			progressCurrent: 0,
+			progressTotal: 0,
+			progressMessage: null,
+		});
+	}
+
 	subscribe(listener: (state: PluginState) => void): () => void {
 		this.listeners.push(listener);
 		return () => {
@@ -93,6 +119,9 @@ export class StateManager {
 			scanResults: null,
 			fileContents: null,
 			error: null,
+			progressCurrent: 0,
+			progressTotal: 0,
+			progressMessage: null,
 		};
 		this.notifyListeners();
 	}

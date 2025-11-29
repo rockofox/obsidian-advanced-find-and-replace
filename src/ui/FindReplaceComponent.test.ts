@@ -34,7 +34,7 @@ describe("FindReplaceComponent", () => {
 		mockApp = createMockApp(testFiles);
 
 		// Create component
-		component = new FindReplaceComponent(containerEl, mockApp, {});
+		component = new FindReplaceComponent(containerEl, mockApp as any, {});
 		mockStateManager = component["stateManager"];
 		mockFileManager = component["fileManager"];
 		mockRegexProcessor = component["regexProcessor"];
@@ -69,7 +69,7 @@ describe("FindReplaceComponent", () => {
 			const onClose = vi.fn();
 			const componentWithActions = new FindReplaceComponent(
 				containerEl,
-				mockApp,
+				mockApp as any,
 				{ onClose },
 			);
 			expect(componentWithActions["actions"].onClose).toBe(onClose);
@@ -457,30 +457,50 @@ describe("FindReplaceComponent", () => {
 			expect(mockStateManager.getState().scanResults).toBeNull();
 		});
 
-		it("should set error when regex is invalid", () => {
+		it("should set error when regex is invalid", async () => {
 			mockStateManager.setRegex("[invalid");
-			component["performScan"]();
+			await component["performScan"]();
 
 			expect(mockStateManager.getState().error).toBe("Invalid regular expression");
 		});
 
-		it("should process files and set results", () => {
+		it("should process files and set results", async () => {
 			const testFile = createMockTFile("test.md");
 			mockStateManager.setRegex("test");
 			mockStateManager.setFileContents([
 				{ file: testFile, content: "This is a test" },
 			]);
 
-			component["performScan"]();
+			// Mock processFiles to return results
+			const mockResults: ProcessResult = {
+				matches: [
+					{
+						file: testFile,
+						lineNumber: 1,
+						match: "test",
+						replacement: "test",
+						context: "This is a test",
+						before: "This is a ",
+						after: "",
+						startIndex: 8,
+						endIndex: 12,
+					},
+				],
+				affectedFiles: [testFile],
+				totalMatches: 1,
+			};
+			vi.spyOn(mockRegexProcessor, "processFiles").mockResolvedValue(mockResults);
+
+			await component["performScan"]();
 
 			const state = mockStateManager.getState();
 			expect(state.scanResults).not.toBeNull();
 			expect(state.isScanning).toBe(false);
 		});
 
-		it("should handle errors during scanning", () => {
+		it("should handle errors during scanning", async () => {
 			vi.spyOn(mockRegexProcessor, "processFiles").mockImplementation(() => {
-				throw new Error("Processing error");
+				return Promise.reject(new Error("Processing error"));
 			});
 
 			mockStateManager.setRegex("test");
@@ -488,7 +508,7 @@ describe("FindReplaceComponent", () => {
 				{ file: createMockTFile("test.md"), content: "test" },
 			]);
 
-			component["performScan"]();
+			await component["performScan"]();
 
 			expect(mockStateManager.getState().error).toBe("Error scanning files");
 		});
@@ -525,7 +545,7 @@ describe("FindReplaceComponent", () => {
 			const performScanSpy = vi.spyOn(component as any, "performScan");
 
 			// Mock applyReplacements to return modifications
-			vi.spyOn(mockRegexProcessor, "applyReplacements").mockReturnValue([
+			vi.spyOn(mockRegexProcessor, "applyReplacements").mockResolvedValue([
 				{ file: testFile, newContent: "This is a replaced" },
 			]);
 
@@ -542,7 +562,7 @@ describe("FindReplaceComponent", () => {
 				{ file: createMockTFile("test.md"), content: "no match" },
 			]);
 
-			vi.spyOn(mockRegexProcessor, "applyReplacements").mockReturnValue([]);
+			vi.spyOn(mockRegexProcessor, "applyReplacements").mockResolvedValue([]);
 
 			await component["applyChanges"]();
 
@@ -556,7 +576,7 @@ describe("FindReplaceComponent", () => {
 				{ file: testFile, content: "test" },
 			]);
 
-			vi.spyOn(mockRegexProcessor, "applyReplacements").mockReturnValue([
+			vi.spyOn(mockRegexProcessor, "applyReplacements").mockResolvedValue([
 				{ file: testFile, newContent: "replaced" },
 			]);
 			vi.spyOn(mockFileManager, "batchModifyFiles").mockRejectedValue(

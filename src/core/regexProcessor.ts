@@ -1,5 +1,5 @@
 import { TFile } from "obsidian";
-import { FileContent } from "./fileManager";
+import { FileContent, ProgressCallback } from "./fileManager";
 
 export interface MatchResult {
 	file: TFile;
@@ -30,6 +30,7 @@ export enum CaseMode {
 export class RegexProcessor {
 	private static readonly CONTEXT_LINES = 2;
 	private static readonly SNIPPET_LENGTH = 200;
+	private static readonly BATCH_SIZE = 25;
 
 	private adjustCase(original: string, replacement: string): string {
 		if (!original || !replacement) return replacement;
@@ -54,13 +55,14 @@ export class RegexProcessor {
 		return replacement;
 	}
 
-	processFiles(
+	async processFiles(
 		fileContents: FileContent[],
 		pattern: string,
 		replacement: string,
 		flags = "g",
 		adjustCase = false,
-	): ProcessResult {
+		onProgress?: ProgressCallback,
+	): Promise<ProcessResult> {
 		const matches: MatchResult[] = [];
 		const affectedFiles: Set<TFile> = new Set();
 		let totalMatches = 0;
@@ -72,59 +74,79 @@ export class RegexProcessor {
 			return { matches: [], affectedFiles: [], totalMatches: 0 };
 		}
 
-		for (const { file, content } of fileContents) {
-			const lines = content.split("\n");
-			let fileHasMatch = false;
+		const total = fileContents.length;
 
-			for (let i = 0; i < lines.length; i++) {
-				const line = lines[i];
-				// Reset lastIndex for each line to prevent issues with global regex
-				regex.lastIndex = 0;
-				let lineMatch: RegExpExecArray | null;
-				let lastMatchIndex = -1;
+		for (let batchStart = 0; batchStart < fileContents.length; batchStart += RegexProcessor.BATCH_SIZE) {
+			const batch = fileContents.slice(batchStart, batchStart + RegexProcessor.BATCH_SIZE);
 
-				while ((lineMatch = regex.exec(line)) !== null) {
-					// Prevent infinite loops with zero-width matches
-					if (lineMatch[0] === "") {
-						// If we matched at the same position twice, advance to prevent infinite loop
-						if (regex.lastIndex === lastMatchIndex) {
-							regex.lastIndex++;
+			for (const { file, content } of batch) {
+				const lines = content.split("\n");
+				let fileHasMatch = false;
+
+				for (let i = 0; i < lines.length; i++) {
+					const line = lines[i];
+					// Reset lastIndex for each line to prevent issues with global regex
+					regex.lastIndex = 0;
+					let lineMatch: RegExpExecArray | null;
+					let lastMatchIndex = -1;
+
+					while ((lineMatch = regex.exec(line)) !== null) {
+						// Prevent infinite loops with zero-width matches
+						if (lineMatch[0] === "") {
+							// If we matched at the same position twice, advance to prevent infinite loop
+							if (regex.lastIndex === lastMatchIndex) {
+								regex.lastIndex++;
+							}
+							// Skip empty matches that don't advance the position
+							if (regex.lastIndex <= lineMatch.index) {
+								regex.lastIndex = lineMatch.index + 1;
+								continue;
+							}
 						}
-						// Skip empty matches that don't advance the position
-						if (regex.lastIndex <= lineMatch.index) {
-							regex.lastIndex = lineMatch.index + 1;
-							continue;
+						
+						// Update lastMatchIndex for non-empty matches or successfully handled empty matches
+						lastMatchIndex = regex.lastIndex;
+						
+						const context = this.getContext(lines, i);
+						let replacementText = lineMatch[0].replace(new RegExp(pattern, flags), replacement || "");
+						
+						// Adjust case if needed
+						if (adjustCase && replacement) {
+							replacementText = this.adjustCase(lineMatch[0], replacementText);
 						}
-					}
-					
-					// Update lastMatchIndex for non-empty matches or successfully handled empty matches
-					lastMatchIndex = regex.lastIndex;
-					
-					const context = this.getContext(lines, i);
-					let replacementText = lineMatch[0].replace(new RegExp(pattern, flags), replacement || "");
-					
-					// Adjust case if needed
-					if (adjustCase && replacement) {
-						replacementText = this.adjustCase(lineMatch[0], replacementText);
-					}
 
-					matches.push({
-						file,
-						lineNumber: i + 1,
-						match: lineMatch[0],
-						replacement: replacementText,
-						context: context.join("\n"),
-						before: line.substring(0, lineMatch.index),
-						after: line.substring(lineMatch.index + lineMatch[0].length),
-						startIndex: lineMatch.index,
-						endIndex: lineMatch.index + lineMatch[0].length,
-					});
-					totalMatches++;
-					fileHasMatch = true;
+						matches.push({
+							file,
+							lineNumber: i + 1,
+							match: lineMatch[0],
+							replacement: replacementText,
+							context: context.join("\n"),
+							before: line.substring(0, lineMatch.index),
+							after: line.substring(lineMatch.index + lineMatch[0].length),
+							startIndex: lineMatch.index,
+							endIndex: lineMatch.index + lineMatch[0].length,
+						});
+						totalMatches++;
+						fileHasMatch = true;
+					}
+				}
+				if (fileHasMatch) {
+					affectedFiles.add(file);
 				}
 			}
-			if (fileHasMatch) {
-				affectedFiles.add(file);
+
+			// Yield control to UI after each batch
+			if (batchStart + RegexProcessor.BATCH_SIZE < fileContents.length) {
+				await new Promise((resolve) => setTimeout(resolve, 0));
+			}
+
+			// Report progress
+			if (onProgress) {
+				onProgress(
+					Math.min(batchStart + RegexProcessor.BATCH_SIZE, total),
+					total,
+					`Scanning files...`,
+				);
 			}
 		}
 
@@ -135,13 +157,14 @@ export class RegexProcessor {
 		};
 	}
 
-	applyReplacements(
+	async applyReplacements(
 		fileContents: FileContent[],
 		pattern: string,
 		replacement: string,
 		flags = "g",
 		adjustCase = false,
-	): Array<{ file: TFile; newContent: string }> {
+		onProgress?: ProgressCallback,
+	): Promise<Array<{ file: TFile; newContent: string }>> {
 		const results: Array<{ file: TFile; newContent: string }> = [];
 
 		let regex: RegExp;
@@ -151,21 +174,41 @@ export class RegexProcessor {
 			return [];
 		}
 
-		for (const { file, content } of fileContents) {
-			let newContent: string;
-			
-			if (adjustCase && replacement) {
-				// For case adjustment, we need to process each match individually
-				newContent = content.replace(regex, (match) => {
-					const replacementText = match.replace(new RegExp(pattern, flags), replacement);
-					return this.adjustCase(match, replacementText);
-				});
-			} else {
-				newContent = content.replace(regex, replacement);
+		const total = fileContents.length;
+
+		for (let batchStart = 0; batchStart < fileContents.length; batchStart += RegexProcessor.BATCH_SIZE) {
+			const batch = fileContents.slice(batchStart, batchStart + RegexProcessor.BATCH_SIZE);
+
+			for (const { file, content } of batch) {
+				let newContent: string;
+				
+				if (adjustCase && replacement) {
+					// For case adjustment, we need to process each match individually
+					newContent = content.replace(regex, (match) => {
+						const replacementText = match.replace(new RegExp(pattern, flags), replacement);
+						return this.adjustCase(match, replacementText);
+					});
+				} else {
+					newContent = content.replace(regex, replacement);
+				}
+
+				if (newContent !== content) {
+					results.push({ file, newContent });
+				}
 			}
 
-			if (newContent !== content) {
-				results.push({ file, newContent });
+			// Yield control to UI after each batch
+			if (batchStart + RegexProcessor.BATCH_SIZE < fileContents.length) {
+				await new Promise((resolve) => setTimeout(resolve, 0));
+			}
+
+			// Report progress
+			if (onProgress) {
+				onProgress(
+					Math.min(batchStart + RegexProcessor.BATCH_SIZE, total),
+					total,
+					`Computing replacements...`,
+				);
 			}
 		}
 

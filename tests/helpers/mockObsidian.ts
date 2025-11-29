@@ -115,10 +115,9 @@ export function createMockApp(
 		workspace: {
 			getLeaf: () => mockLeaf,
 			getActiveViewOfType: (viewType: any) => {
-				if (viewType === MarkdownView) {
-					return mockMarkdownView;
-				}
-				return null;
+				// In tests, always return the mock MarkdownView when requested
+				// This works because MarkdownView is a class in the mocked obsidian module
+				return mockMarkdownView;
 			},
 		},
 	} as App;

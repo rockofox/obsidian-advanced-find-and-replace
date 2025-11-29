@@ -35,8 +35,8 @@ describe("RegexProcessor", () => {
 	});
 
 	describe("processFiles - basic matching", () => {
-		it("should find simple text matches", () => {
-			const result = processor.processFiles(
+		it("should find simple text matches", async () => {
+			const result = await processor.processFiles(
 				testFiles,
 				"test",
 				"",
@@ -50,19 +50,19 @@ describe("RegexProcessor", () => {
 			expect(result.matches.length).toBe(1);
 		});
 
-		it("should find multiple matches in a single file", () => {
+		it("should find multiple matches in a single file", async () => {
 			const files = [
 				createTestFileContent("file.md", "test test test"),
 			];
 
-			const result = processor.processFiles(files, "test", "", "g");
+			const result = await processor.processFiles(files, "test", "", "g");
 
 			expect(result.totalMatches).toBe(3);
 			expect(result.affectedFiles.length).toBe(1);
 		});
 
-		it("should return empty results when no matches found", () => {
-			const result = processor.processFiles(
+		it("should return empty results when no matches found", async () => {
+			const result = await processor.processFiles(
 				testFiles,
 				"nonexistent",
 				"",
@@ -74,54 +74,54 @@ describe("RegexProcessor", () => {
 			expect(result.matches.length).toBe(0);
 		});
 
-		it("should handle empty pattern", () => {
-			const result = processor.processFiles(testFiles, "", "", "g");
+		it("should handle empty pattern", async () => {
+			const result = await processor.processFiles(testFiles, "", "", "g");
 
 			expect(result.totalMatches).toBe(0);
 		});
 	});
 
 	describe("processFiles - regex flags", () => {
-		it("should respect case-insensitive flag (i)", () => {
+		it("should respect case-insensitive flag (i)", async () => {
 			const files = [createTestFileContent("file.md", "Test TEST test")];
 
-			const result = processor.processFiles(files, "test", "", "gi");
+			const result = await processor.processFiles(files, "test", "", "gi");
 
 			expect(result.totalMatches).toBe(3);
 		});
 
-		it("should respect case-sensitive matching without i flag", () => {
+		it("should respect case-sensitive matching without i flag", async () => {
 			const files = [createTestFileContent("file.md", "Test TEST test")];
 
-			const result = processor.processFiles(files, "test", "", "g");
+			const result = await processor.processFiles(files, "test", "", "g");
 
 			expect(result.totalMatches).toBe(1);
 		});
 
-		it("should handle multiline flag (m)", () => {
+		it("should handle multiline flag (m)", async () => {
 			const files = [
 				createTestFileContent("file.md", "Line 1\nLine 2\nLine 3"),
 			];
 
-			const result = processor.processFiles(files, "^Line", "", "gm");
+			const result = await processor.processFiles(files, "^Line", "", "gm");
 
 			expect(result.totalMatches).toBe(3);
 		});
 	});
 
 	describe("processFiles - match details", () => {
-		it("should include correct line numbers", () => {
+		it("should include correct line numbers", async () => {
 			const files = [
 				createTestFileContent("file.md", "Line 1\nLine 2 test\nLine 3"),
 			];
 
-			const result = processor.processFiles(files, "test", "", "g");
+			const result = await processor.processFiles(files, "test", "", "g");
 
 			expect(result.matches[0].lineNumber).toBe(2);
 		});
 
-		it("should include match text", () => {
-			const result = processor.processFiles(
+		it("should include match text", async () => {
+			const result = await processor.processFiles(
 				testFiles,
 				"test",
 				"",
@@ -131,29 +131,29 @@ describe("RegexProcessor", () => {
 			expect(result.matches[0].match).toBe("test");
 		});
 
-		it("should include before and after context", () => {
+		it("should include before and after context", async () => {
 			const files = [
 				createTestFileContent("file.md", "before test after"),
 			];
 
-			const result = processor.processFiles(files, "test", "", "g");
+			const result = await processor.processFiles(files, "test", "", "g");
 
 			expect(result.matches[0].before).toBe("before ");
 			expect(result.matches[0].after).toBe(" after");
 		});
 
-		it("should include start and end indices", () => {
+		it("should include start and end indices", async () => {
 			const files = [
 				createTestFileContent("file.md", "before test after"),
 			];
 
-			const result = processor.processFiles(files, "test", "", "g");
+			const result = await processor.processFiles(files, "test", "", "g");
 
 			expect(result.matches[0].startIndex).toBe(7);
 			expect(result.matches[0].endIndex).toBe(11);
 		});
 
-		it("should include context lines", () => {
+		it("should include context lines", async () => {
 			const files = [
 				createTestFileContent(
 					"file.md",
@@ -161,7 +161,7 @@ describe("RegexProcessor", () => {
 				),
 			];
 
-			const result = processor.processFiles(files, "test", "", "g");
+			const result = await processor.processFiles(files, "test", "", "g");
 
 			const context = result.matches[0].context;
 			expect(context).toContain("Line 1");
@@ -171,10 +171,10 @@ describe("RegexProcessor", () => {
 	});
 
 	describe("processFiles - case adjustment", () => {
-		it("should adjust case for uppercase original", () => {
+		it("should adjust case for uppercase original", async () => {
 			const files = [createTestFileContent("file.md", "TEST")];
 
-			const result = processor.processFiles(
+			const result = await processor.processFiles(
 				files,
 				"TEST",
 				"replacement",
@@ -185,10 +185,10 @@ describe("RegexProcessor", () => {
 			expect(result.matches[0].replacement).toBe("REPLACEMENT");
 		});
 
-		it("should adjust case for lowercase original", () => {
+		it("should adjust case for lowercase original", async () => {
 			const files = [createTestFileContent("file.md", "test")];
 
-			const result = processor.processFiles(
+			const result = await processor.processFiles(
 				files,
 				"test",
 				"REPLACEMENT",
@@ -199,10 +199,10 @@ describe("RegexProcessor", () => {
 			expect(result.matches[0].replacement).toBe("replacement");
 		});
 
-		it("should adjust case for title case original", () => {
+		it("should adjust case for title case original", async () => {
 			const files = [createTestFileContent("file.md", "Test")];
 
-			const result = processor.processFiles(
+			const result = await processor.processFiles(
 				files,
 				"Test",
 				"replacement",
@@ -213,10 +213,10 @@ describe("RegexProcessor", () => {
 			expect(result.matches[0].replacement).toBe("Replacement");
 		});
 
-		it("should not adjust case when adjustCase is false", () => {
+		it("should not adjust case when adjustCase is false", async () => {
 			const files = [createTestFileContent("file.md", "TEST")];
 
-			const result = processor.processFiles(
+			const result = await processor.processFiles(
 				files,
 				"TEST",
 				"replacement",
@@ -227,10 +227,10 @@ describe("RegexProcessor", () => {
 			expect(result.matches[0].replacement).toBe("replacement");
 		});
 
-		it("should handle mixed case without adjustment", () => {
+		it("should handle mixed case without adjustment", async () => {
 			const files = [createTestFileContent("file.md", "TeSt")];
 
-			const result = processor.processFiles(
+			const result = await processor.processFiles(
 				files,
 				"TeSt",
 				"replacement",
@@ -244,35 +244,35 @@ describe("RegexProcessor", () => {
 	});
 
 	describe("processFiles - edge cases", () => {
-		it("should handle invalid regex gracefully", () => {
-			const result = processor.processFiles(testFiles, "[", "", "g");
+		it("should handle invalid regex gracefully", async () => {
+			const result = await processor.processFiles(testFiles, "[", "", "g");
 
 			expect(result.totalMatches).toBe(0);
 			expect(result.affectedFiles.length).toBe(0);
 		});
 
-		it("should handle empty file contents", () => {
+		it("should handle empty file contents", async () => {
 			const emptyFiles: FileContent[] = [];
 
-			const result = processor.processFiles(emptyFiles, "test", "", "g");
+			const result = await processor.processFiles(emptyFiles, "test", "", "g");
 
 			expect(result.totalMatches).toBe(0);
 			expect(result.affectedFiles.length).toBe(0);
 		});
 
-		it("should handle files with empty content", () => {
+		it("should handle files with empty content", async () => {
 			const files = [createTestFileContent("file.md", "")];
 
-			const result = processor.processFiles(files, "test", "", "g");
+			const result = await processor.processFiles(files, "test", "", "g");
 
 			expect(result.totalMatches).toBe(0);
 		});
 
-		it("should handle zero-width matches without infinite loops", () => {
+		it("should handle zero-width matches without infinite loops", async () => {
 			const files = [createTestFileContent("file.md", "test")];
 
 			// Using a pattern that matches zero-width (start of string)
-			const result = processor.processFiles(files, "^", "", "g");
+			const result = await processor.processFiles(files, "^", "", "g");
 
 			// Should handle gracefully - may match once at start, but not infinitely
 			expect(result.totalMatches).toBeGreaterThanOrEqual(0);
@@ -281,36 +281,36 @@ describe("RegexProcessor", () => {
 	});
 
 	describe("applyReplacements - basic replacement", () => {
-		it("should replace matches in file content", () => {
+		it("should replace matches in file content", async () => {
 			const files = [createTestFileContent("file.md", "test content")];
 
-			const result = processor.applyReplacements(files, "test", "replaced", "g");
+			const result = await processor.applyReplacements(files, "test", "replaced", "g");
 
 			expect(result.length).toBe(1);
 			expect(result[0].newContent).toBe("replaced content");
 		});
 
-		it("should replace multiple occurrences", () => {
+		it("should replace multiple occurrences", async () => {
 			const files = [createTestFileContent("file.md", "test test test")];
 
-			const result = processor.applyReplacements(files, "test", "replaced", "g");
+			const result = await processor.applyReplacements(files, "test", "replaced", "g");
 
 			expect(result.length).toBe(1);
 			expect(result[0].newContent).toBe("replaced replaced replaced");
 		});
 
-		it("should not modify files with no matches", () => {
+		it("should not modify files with no matches", async () => {
 			const files = [createTestFileContent("file.md", "no match here")];
 
-			const result = processor.applyReplacements(files, "test", "replaced", "g");
+			const result = await processor.applyReplacements(files, "test", "replaced", "g");
 
 			expect(result.length).toBe(0);
 		});
 
-		it("should handle empty replacement", () => {
+		it("should handle empty replacement", async () => {
 			const files = [createTestFileContent("file.md", "test content")];
 
-			const result = processor.applyReplacements(files, "test", "", "g");
+			const result = await processor.applyReplacements(files, "test", "", "g");
 
 			expect(result.length).toBe(1);
 			expect(result[0].newContent).toBe(" content");
@@ -318,10 +318,10 @@ describe("RegexProcessor", () => {
 	});
 
 	describe("applyReplacements - case adjustment", () => {
-		it("should adjust case when enabled", () => {
+		it("should adjust case when enabled", async () => {
 			const files = [createTestFileContent("file.md", "TEST")];
 
-			const result = processor.applyReplacements(
+			const result = await processor.applyReplacements(
 				files,
 				"TEST",
 				"replacement",
@@ -332,10 +332,10 @@ describe("RegexProcessor", () => {
 			expect(result[0].newContent).toBe("REPLACEMENT");
 		});
 
-		it("should not adjust case when disabled", () => {
+		it("should not adjust case when disabled", async () => {
 			const files = [createTestFileContent("file.md", "TEST")];
 
-			const result = processor.applyReplacements(
+			const result = await processor.applyReplacements(
 				files,
 				"TEST",
 				"replacement",
@@ -348,26 +348,26 @@ describe("RegexProcessor", () => {
 	});
 
 	describe("applyReplacements - multiple files", () => {
-		it("should process multiple files", () => {
+		it("should process multiple files", async () => {
 			const files = [
 				createTestFileContent("file1.md", "test content"),
 				createTestFileContent("file2.md", "test content"),
 			];
 
-			const result = processor.applyReplacements(files, "test", "replaced", "g");
+			const result = await processor.applyReplacements(files, "test", "replaced", "g");
 
 			expect(result.length).toBe(2);
 			expect(result[0].file.path).toBe("file1.md");
 			expect(result[1].file.path).toBe("file2.md");
 		});
 
-		it("should only return files that were modified", () => {
+		it("should only return files that were modified", async () => {
 			const files = [
 				createTestFileContent("file1.md", "test content"),
 				createTestFileContent("file2.md", "no match"),
 			];
 
-			const result = processor.applyReplacements(files, "test", "replaced", "g");
+			const result = await processor.applyReplacements(files, "test", "replaced", "g");
 
 			expect(result.length).toBe(1);
 			expect(result[0].file.path).toBe("file1.md");
@@ -375,24 +375,24 @@ describe("RegexProcessor", () => {
 	});
 
 	describe("applyReplacements - edge cases", () => {
-		it("should handle invalid regex gracefully", () => {
+		it("should handle invalid regex gracefully", async () => {
 			const files = [createTestFileContent("file.md", "test")];
 
-			const result = processor.applyReplacements(files, "[", "replaced", "g");
+			const result = await processor.applyReplacements(files, "[", "replaced", "g");
 
 			expect(result.length).toBe(0);
 		});
 
-		it("should handle empty file list", () => {
-			const result = processor.applyReplacements([], "test", "replaced", "g");
+		it("should handle empty file list", async () => {
+			const result = await processor.applyReplacements([], "test", "replaced", "g");
 
 			expect(result.length).toBe(0);
 		});
 
-		it("should handle regex with capture groups", () => {
+		it("should handle regex with capture groups", async () => {
 			const files = [createTestFileContent("file.md", "Hello world")];
 
-			const result = processor.applyReplacements(
+			const result = await processor.applyReplacements(
 				files,
 				"(\\w+) (\\w+)",
 				"$2 $1",

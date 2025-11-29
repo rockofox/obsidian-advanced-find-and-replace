@@ -25,3 +25,6 @@ dist/
 # Test coverage
 coverage/
 *.lcov
+
+install.sh
+install-test.sh

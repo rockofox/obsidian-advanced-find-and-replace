@@ -8,7 +8,7 @@ describe("FindReplaceModal", () => {
 
 	beforeEach(() => {
 		mockApp = createMockApp([]);
-		modal = new FindReplaceModal(mockApp);
+		modal = new FindReplaceModal(mockApp as any);
 	});
 
 	describe("constructor", () => {

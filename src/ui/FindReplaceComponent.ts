@@ -248,24 +248,37 @@ export class FindReplaceComponent {
 
 	private async loadFileContents() {
 		this.stateManager.setScanning(true);
+		this.stateManager.clearProgress();
 		try {
-			const fileContents = await this.fileManager.getAllMarkdownFiles();
+			const fileContents = await this.fileManager.getAllMarkdownFiles(
+				(current, total, message) => {
+					this.stateManager.setProgress(current, total, message);
+				},
+			);
 			this.stateManager.setFileContents(fileContents);
 		} catch {
 			this.stateManager.setError("Failed to load vault files");
 			new Notice("Error loading vault files");
 		} finally {
 			this.stateManager.setScanning(false);
+			this.stateManager.clearProgress();
 		}
 	}
 
 	private async refreshFileContents() {
+		this.stateManager.clearProgress();
 		try {
-			const fileContents = await this.fileManager.getAllMarkdownFiles();
+			const fileContents = await this.fileManager.getAllMarkdownFiles(
+				(current, total, message) => {
+					this.stateManager.setProgress(current, total, message);
+				},
+			);
 			this.stateManager.setFileContents(fileContents);
 		} catch {
 			this.stateManager.setError("Failed to refresh vault files");
 			new Notice("Error refreshing vault files");
+		} finally {
+			this.stateManager.clearProgress();
 		}
 	}
 
@@ -279,7 +292,7 @@ export class FindReplaceComponent {
 		}, 300);
 	}
 
-	private performScan() {
+	private async performScan() {
 		const state = this.stateManager.getState();
 
 		if (!state.regex || !state.fileContents) {
@@ -294,20 +307,25 @@ export class FindReplaceComponent {
 
 		this.stateManager.setScanning(true);
 		this.stateManager.setError(null);
+		this.stateManager.clearProgress();
 
 		try {
-			const results = this.regexProcessor.processFiles(
+			const results = await this.regexProcessor.processFiles(
 				state.fileContents,
 				state.regex,
 				state.replacement,
 				state.flags,
 				state.adjustCase,
+				(current, total, message) => {
+					this.stateManager.setProgress(current, total, message);
+				},
 			);
 			this.stateManager.setScanResults(results);
 		} catch {
 			this.stateManager.setError("Error scanning files");
 		} finally {
 			this.stateManager.setScanning(false);
+			this.stateManager.clearProgress();
 		}
 	}
 
@@ -322,7 +340,14 @@ export class FindReplaceComponent {
 
 		if (state.isScanning) {
 			statusEl.empty();
-			statusEl.createSpan({ text: "Searching..." });
+			if (state.progressTotal > 0) {
+				const progressText = state.progressMessage
+					? `${state.progressMessage} (${state.progressCurrent} of ${state.progressTotal})`
+					: `Processing file ${state.progressCurrent} of ${state.progressTotal}...`;
+				statusEl.createSpan({ text: progressText });
+			} else {
+				statusEl.createSpan({ text: "Searching..." });
+			}
 			resultsEl.removeClass("visible");
 			resultsEl.addClass("hidden");
 			return;
@@ -524,21 +549,34 @@ export class FindReplaceComponent {
 			return;
 		}
 
-		const modifications = this.regexProcessor.applyReplacements(
-			state.fileContents,
-			state.regex,
-			state.replacement,
-			state.flags,
-			state.adjustCase,
-		);
-
-		if (modifications.length === 0) {
-			new Notice("No changes to apply");
-			return;
-		}
+		this.stateManager.setScanning(true);
+		this.stateManager.clearProgress();
 
 		try {
-			await this.fileManager.batchModifyFiles(modifications);
+			const modifications = await this.regexProcessor.applyReplacements(
+				state.fileContents,
+				state.regex,
+				state.replacement,
+				state.flags,
+				state.adjustCase,
+				(current, total, message) => {
+					this.stateManager.setProgress(current, total, message);
+				},
+			);
+
+			if (modifications.length === 0) {
+				new Notice("No changes to apply");
+				this.stateManager.setScanning(false);
+				this.stateManager.clearProgress();
+				return;
+			}
+
+			await this.fileManager.batchModifyFiles(
+				modifications,
+				(current, total, message) => {
+					this.stateManager.setProgress(current, total, message);
+				},
+			);
 			new Notice(
 				`Successfully updated ${modifications.length} file${modifications.length !== 1 ? "s" : ""}`,
 			);
@@ -550,6 +588,9 @@ export class FindReplaceComponent {
 			void this.performScan();
 		} catch {
 			new Notice("Error applying changes");
+		} finally {
+			this.stateManager.setScanning(false);
+			this.stateManager.clearProgress();
 		}
 	}
 

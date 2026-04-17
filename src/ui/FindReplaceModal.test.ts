@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { FindReplaceModal } from "./FindReplaceModal";
-import { createMockApp } from "../../tests/helpers/mockObsidian";
-
+import { createMockApp, App as MockApp } from "../../tests/helpers/mockObsidian";
+import { App } from "obsidian";
 describe("FindReplaceModal", () => {
 	let modal: FindReplaceModal;
-	let mockApp: ReturnType<typeof createMockApp>;
+	let mockApp: MockApp;
 
 	beforeEach(() => {
 		mockApp = createMockApp([]);
-		modal = new FindReplaceModal(mockApp as any);
+	modal = new FindReplaceModal(mockApp as unknown as App);
 	});
 
 	describe("constructor", () => {
@@ -33,7 +33,7 @@ describe("FindReplaceModal", () => {
 			const contentEl = document.createElement("div");
 			modal.contentEl = contentEl;
 			// Add close method to modal for testing
-			(modal as any).close = vi.fn();
+			Object.assign(modal, { close: vi.fn() });
 
 			modal.onOpen();
 

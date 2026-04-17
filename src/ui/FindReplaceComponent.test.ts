@@ -1,22 +1,23 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { FindReplaceComponent } from "./FindReplaceComponent";
 import {
-	createMockApp,
-	createMockTFile,
-	createTestFileContent,
+  createMockApp,
+  createMockTFile,
+  createTestFileContent,
+  App as MockApp,
 } from "../../tests/helpers/mockObsidian";
+import { App } from "obsidian";
 import { StateManager } from "../state";
 import { FileManager } from "../core/fileManager";
 import { RegexProcessor } from "../core/regexProcessor";
 import { MatchResult, ProcessResult } from "../core/regexProcessor";
-import { App, Notice, MarkdownView, WorkspaceLeaf } from "obsidian";
-
+import { Notice } from "obsidian";
 // Obsidian is mocked globally in tests/setup.ts
 
 describe("FindReplaceComponent", () => {
 	let component: FindReplaceComponent;
 	let containerEl: HTMLElement;
-	let mockApp: ReturnType<typeof createMockApp>;
+	let mockApp: MockApp;
 	let mockStateManager: StateManager;
 	let mockFileManager: FileManager;
 	let mockRegexProcessor: RegexProcessor;
@@ -34,7 +35,7 @@ describe("FindReplaceComponent", () => {
 		mockApp = createMockApp(testFiles);
 
 		// Create component
-		component = new FindReplaceComponent(containerEl, mockApp as any, {});
+	component = new FindReplaceComponent(containerEl, mockApp as unknown as App, {});
 		mockStateManager = component["stateManager"];
 		mockFileManager = component["fileManager"];
 		mockRegexProcessor = component["regexProcessor"];
@@ -69,7 +70,7 @@ describe("FindReplaceComponent", () => {
 			const onClose = vi.fn();
 			const componentWithActions = new FindReplaceComponent(
 				containerEl,
-				mockApp as any,
+			mockApp as unknown as App,
 				{ onClose },
 			);
 			expect(componentWithActions["actions"].onClose).toBe(onClose);
@@ -78,7 +79,9 @@ describe("FindReplaceComponent", () => {
 
 	describe("onLoad", () => {
 		it("should empty container and add class", () => {
-			containerEl.innerHTML = "<div>existing content</div>";
+			const div = document.createElement("div");
+	div.textContent = "Existing content";
+		containerEl.appendChild(div);
 			component.onLoad();
 
 			expect(containerEl.classList.contains("advanced-find-replace")).toBe(true);
@@ -135,7 +138,7 @@ describe("FindReplaceComponent", () => {
 
 		it("should clear debounce timer", () => {
 			component.onLoad();
-			component["debounceTimer"] = setTimeout(() => {}, 1000) as NodeJS.Timeout;
+			component["debounceTimer"] = setTimeout(() => {}, 1000);
 			const clearTimeoutSpy = vi.spyOn(global, "clearTimeout");
 
 			component.onUnload();
@@ -200,7 +203,7 @@ describe("FindReplaceComponent", () => {
 
 		it("should debounce scan on input", async () => {
 			vi.useFakeTimers();
-			const performScanSpy = vi.spyOn(component as any, "performScan");
+		const performScanSpy = vi.spyOn(component as unknown as { performScan: () => Promise<void> }, "performScan");
 
 			const findInput = containerEl.querySelector(".find-input") as HTMLInputElement;
 			findInput.value = "test";
@@ -277,8 +280,8 @@ describe("FindReplaceComponent", () => {
 
 		it("should do nothing with invalid regex", () => {
 			mockStateManager.setRegex("[invalid");
-			const searchOnlySpy = vi.spyOn(component as any, "searchOnly");
-			const applyChangesSpy = vi.spyOn(component as any, "applyChanges");
+		const searchOnlySpy = vi.spyOn(component as unknown as { searchOnly: () => void }, "searchOnly");
+		const applyChangesSpy = vi.spyOn(component as unknown as { applyChanges: () => Promise<void> }, "applyChanges");
 
 			component["handleEnterKey"]();
 
@@ -288,19 +291,19 @@ describe("FindReplaceComponent", () => {
 
 		it("should call searchOnly when replacement is collapsed", () => {
 			mockStateManager.setRegex("test");
-			const searchOnlySpy = vi.spyOn(component as any, "searchOnly");
+		const searchOnlySpy = vi.spyOn(component as unknown as { searchOnly: () => void }, "searchOnly");
 
 			component["handleEnterKey"]();
 
 			expect(searchOnlySpy).toHaveBeenCalled();
 		});
 
-		it("should call applyChanges when replacement is open", async () => {
+		it("should call applyChanges when replacement is open", () => {
 			mockStateManager.setRegex("test");
 			const toggleBtn = containerEl.querySelector(".toggle-replace-btn") as HTMLElement;
 			toggleBtn.click();
 
-			const applyChangesSpy = vi.spyOn(component as any, "applyChanges").mockResolvedValue(
+		const applyChangesSpy = vi.spyOn(component as unknown as { applyChanges: () => Promise<void> }, "applyChanges").mockResolvedValue(
 				undefined,
 			);
 
@@ -452,7 +455,7 @@ describe("FindReplaceComponent", () => {
 
 		it("should set scan results to null when no regex", () => {
 			mockStateManager.setRegex("");
-			component["performScan"]();
+			void component["performScan"]();
 
 			expect(mockStateManager.getState().scanResults).toBeNull();
 		});
@@ -539,10 +542,10 @@ describe("FindReplaceComponent", () => {
 			const batchModifySpy = vi.spyOn(mockFileManager, "batchModifyFiles").mockResolvedValue(
 				undefined,
 			);
-			const refreshSpy = vi.spyOn(component as any, "refreshFileContents").mockResolvedValue(
+		const refreshSpy = vi.spyOn(component as unknown as { refreshFileContents: () => Promise<void> }, "refreshFileContents").mockResolvedValue(
 				undefined,
 			);
-			const performScanSpy = vi.spyOn(component as any, "performScan");
+		const performScanSpy = vi.spyOn(component as unknown as { performScan: () => Promise<void> }, "performScan");
 
 			// Mock applyReplacements to return modifications
 			vi.spyOn(mockRegexProcessor, "applyReplacements").mockResolvedValue([

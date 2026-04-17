@@ -1,14 +1,16 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { FileManager } from "./fileManager";
 import {
-	createMockApp,
-	createMockTFile,
-	createTestFileContent,
+  createMockApp,
+  createMockTFile,
+  createTestFileContent,
+  App as MockApp,
 } from "../../tests/helpers/mockObsidian";
+import { App } from "obsidian";
 
 describe("FileManager", () => {
 	let fileManager: FileManager;
-	let mockApp: ReturnType<typeof createMockApp>;
+	let mockApp: MockApp;
 
 	beforeEach(() => {
 		const testFiles = [
@@ -18,7 +20,7 @@ describe("FileManager", () => {
 		];
 
 		mockApp = createMockApp(testFiles);
-  fileManager = new FileManager(mockApp as any);
+	fileManager = new FileManager(mockApp as unknown as App);
 	});
 
 	describe("getAllMarkdownFiles", () => {
@@ -36,7 +38,7 @@ describe("FileManager", () => {
 
 		it("should handle empty vault", async () => {
 			const emptyApp = createMockApp([]);
-    const emptyFileManager = new FileManager(emptyApp as any);
+	const emptyFileManager = new FileManager(emptyApp as unknown as App);
 
 			const result = await emptyFileManager.getAllMarkdownFiles();
 
@@ -143,7 +145,7 @@ describe("FileManager", () => {
 	describe("Error handling", () => {
 		it("should handle empty vault", async () => {
 			const emptyApp = createMockApp([]);
-    const emptyFileManager = new FileManager(emptyApp as any);
+	const emptyFileManager = new FileManager(emptyApp as unknown as App);
 
 			await expect(
 				emptyFileManager.getAllMarkdownFiles(),
@@ -153,7 +155,7 @@ describe("FileManager", () => {
 		it("should allow modifying non-existent files (creates new file)", async () => {
 			const nonExistentFile = createMockTFile("nonexistent.md");
 			const emptyApp = createMockApp([]);
-    const emptyFileManager = new FileManager(emptyApp as any);
+	const emptyFileManager = new FileManager(emptyApp as unknown as App);
 
 			// Obsidian's modify doesn't throw - it creates the file if it doesn't exist
 			await expect(

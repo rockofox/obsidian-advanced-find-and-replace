@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { FindReplaceView, VIEW_TYPE_ADVANCED_FIND_REPLACE } from "./FindReplaceView";
-import { createMockApp } from "../../tests/helpers/mockObsidian";
+import { createMockApp, App as MockApp } from "../../tests/helpers/mockObsidian";
 import { WorkspaceLeaf } from "obsidian";
-
+import { App } from "obsidian";
 describe("FindReplaceView", () => {
 	let view: FindReplaceView;
-	let mockApp: ReturnType<typeof createMockApp>;
+	let mockApp: MockApp;
 	let mockLeaf: WorkspaceLeaf;
 
 	beforeEach(() => {
@@ -14,7 +14,7 @@ describe("FindReplaceView", () => {
 			detach: vi.fn(),
 		} as unknown as WorkspaceLeaf;
 		view = new FindReplaceView(mockLeaf);
-		view.app = mockApp as any;
+	view.app = mockApp as unknown as App;
 	});
 
 	describe("constructor", () => {

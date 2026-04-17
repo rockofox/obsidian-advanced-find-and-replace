@@ -52,7 +52,7 @@ export default class AdvancedFindReplacePlugin extends Plugin {
 		}
 
 		if (leaf) {
-			workspace.revealLeaf(leaf);
+			void workspace.revealLeaf(leaf);
 		}
 	}
 }

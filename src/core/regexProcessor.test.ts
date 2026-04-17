@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { RegexProcessor } from "./regexProcessor";
 import { FileContent } from "./fileManager";
-import { createMockTFile, createTestFileContent } from "../../tests/helpers/mockObsidian";
+import { createTestFileContent } from "../../tests/helpers/mockObsidian";
 
 describe("RegexProcessor", () => {
 	let processor: RegexProcessor;

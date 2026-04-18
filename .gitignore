@@ -28,3 +28,6 @@ coverage/
 
 install.sh
 install-test.sh
+
+# Git worktrees
+.worktrees/

@@ -271,6 +271,64 @@ describe("StateManager", () => {
 			expect(notifiedState).not.toBeNull();
 			expect(notifiedState!.regex).toBe("");
 		});
+
+		it("should clear undo/redo history on reset", () => {
+			const file = createMockTFile("test.md");
+			stateManager.pushHistory({
+				description: "test op",
+				snapshots: [{ file, before: "a", after: "b" }],
+				timestamp: Date.now(),
+			});
+			expect(stateManager.getState().canUndo).toBe(true);
+
+			stateManager.reset();
+
+			expect(stateManager.getState().canUndo).toBe(false);
+			expect(stateManager.getState().canRedo).toBe(false);
+		});
+	});
+
+	describe("undoHistory / redoHistory", () => {
+		it("should return null when stack is empty", () => {
+			expect(stateManager.undoHistory()).toBeNull();
+			expect(stateManager.redoHistory()).toBeNull();
+		});
+
+		it("should undo and update canUndo/canRedo state", () => {
+			const file = createMockTFile("test.md");
+			stateManager.pushHistory({
+				description: "op1",
+				snapshots: [{ file, before: "before", after: "after" }],
+				timestamp: Date.now(),
+			});
+
+			expect(stateManager.getState().canUndo).toBe(true);
+			expect(stateManager.getState().canRedo).toBe(false);
+
+			const entry = stateManager.undoHistory();
+
+			expect(entry).not.toBeNull();
+			expect(entry!.description).toBe("op1");
+			expect(stateManager.getState().canUndo).toBe(false);
+			expect(stateManager.getState().canRedo).toBe(true);
+		});
+
+		it("should redo and update canUndo/canRedo state", () => {
+			const file = createMockTFile("test.md");
+			stateManager.pushHistory({
+				description: "op1",
+				snapshots: [{ file, before: "before", after: "after" }],
+				timestamp: Date.now(),
+			});
+			stateManager.undoHistory();
+
+			const entry = stateManager.redoHistory();
+
+			expect(entry).not.toBeNull();
+			expect(entry!.description).toBe("op1");
+			expect(stateManager.getState().canUndo).toBe(true);
+			expect(stateManager.getState().canRedo).toBe(false);
+		});
 	});
 });
 

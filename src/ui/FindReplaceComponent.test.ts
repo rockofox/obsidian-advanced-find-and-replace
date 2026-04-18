@@ -539,6 +539,8 @@ describe("FindReplaceComponent", () => {
 				{ file: testFile, content: "This is a test" },
 			]);
 
+			vi.spyOn(mockApp.vault, "read").mockResolvedValue("This is a test");
+
 			const batchModifySpy = vi.spyOn(mockFileManager, "batchModifyFiles").mockResolvedValue(
 				undefined,
 			);
@@ -621,6 +623,83 @@ describe("FindReplaceComponent", () => {
 			component["searchOnly"]();
 
 			expect(Notice).toHaveBeenCalledWith("No matches found");
+		});
+	});
+
+	describe("performUndo", () => {
+		beforeEach(() => {
+			component.onLoad();
+		});
+
+		it("should restore before content for each snapshot", async () => {
+			const testFile = createMockTFile("test.md");
+			const vaultModifySpy = vi.spyOn(mockApp.vault, "modify").mockResolvedValue(undefined);
+			const refreshSpy = vi.spyOn(component as unknown as { refreshFileContents: () => Promise<void> }, "refreshFileContents").mockResolvedValue(undefined);
+			vi.spyOn(component as unknown as { performScan: () => Promise<void> }, "performScan").mockResolvedValue(undefined);
+
+			mockStateManager.pushHistory({
+				description: "Replace 'foo' → 'bar' (1 file)",
+				snapshots: [{ file: testFile, before: "original content", after: "replaced content" }],
+				timestamp: Date.now(),
+			});
+
+			await component["performUndo"]();
+
+			expect(vaultModifySpy).toHaveBeenCalledWith(testFile, "original content");
+			expect(refreshSpy).toHaveBeenCalled();
+		});
+
+		it("should show notice when a file cannot be restored", async () => {
+			const testFile = createMockTFile("deleted.md");
+			vi.spyOn(mockApp.vault, "modify").mockRejectedValue(new Error("File not found"));
+			vi.spyOn(component as unknown as { refreshFileContents: () => Promise<void> }, "refreshFileContents").mockResolvedValue(undefined);
+			vi.spyOn(component as unknown as { performScan: () => Promise<void> }, "performScan").mockResolvedValue(undefined);
+
+			mockStateManager.pushHistory({
+				description: "Replace 'foo' → 'bar' (1 file)",
+				snapshots: [{ file: testFile, before: "original", after: "replaced" }],
+				timestamp: Date.now(),
+			});
+
+			await component["performUndo"]();
+
+			expect(Notice).toHaveBeenCalledWith("Some files were deleted and could not be restored.");
+		});
+
+		it("should do nothing when history is empty", async () => {
+			const vaultModifySpy = vi.spyOn(mockApp.vault, "modify");
+			await component["performUndo"]();
+			expect(vaultModifySpy).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("performRedo", () => {
+		beforeEach(() => {
+			component.onLoad();
+		});
+
+		it("should restore after content for each snapshot", async () => {
+			const testFile = createMockTFile("test.md");
+			const vaultModifySpy = vi.spyOn(mockApp.vault, "modify").mockResolvedValue(undefined);
+			vi.spyOn(component as unknown as { refreshFileContents: () => Promise<void> }, "refreshFileContents").mockResolvedValue(undefined);
+			vi.spyOn(component as unknown as { performScan: () => Promise<void> }, "performScan").mockResolvedValue(undefined);
+
+			mockStateManager.pushHistory({
+				description: "Replace 'foo' → 'bar' (1 file)",
+				snapshots: [{ file: testFile, before: "original content", after: "replaced content" }],
+				timestamp: Date.now(),
+			});
+			mockStateManager.undoHistory();
+
+			await component["performRedo"]();
+
+			expect(vaultModifySpy).toHaveBeenCalledWith(testFile, "replaced content");
+		});
+
+		it("should do nothing when no redo history", async () => {
+			const vaultModifySpy = vi.spyOn(mockApp.vault, "modify");
+			await component["performRedo"]();
+			expect(vaultModifySpy).not.toHaveBeenCalled();
 		});
 	});
 

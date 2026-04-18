@@ -244,6 +244,24 @@ export class FindReplaceComponent {
 
 		
 		replaceBtn.addClass("hidden");
+
+		const undoRedoContainer = buttonContainer.createDiv("undo-redo-buttons");
+
+		const undoBtn = undoRedoContainer.createEl("button", {
+			text: "↩ Undo",
+			cls: "undo-btn",
+		});
+		undoBtn.id = "undo-button";
+		undoBtn.disabled = true;
+		undoBtn.onclick = () => void this.performUndo();
+
+		const redoBtn = undoRedoContainer.createEl("button", {
+			text: "↪ Redo",
+			cls: "redo-btn",
+		});
+		redoBtn.id = "redo-button";
+		redoBtn.disabled = true;
+		redoBtn.onclick = () => void this.performRedo();
 	}
 
 	private async loadFileContents() {
@@ -513,6 +531,15 @@ export class FindReplaceComponent {
 		if (!this.isReplacementCollapsed) {
 			applyButton.disabled = !hasValidInput || !hasMatches || isScanning;
 		}
+
+		const undoBtn = this.containerEl.querySelector("#undo-button") as HTMLButtonElement;
+		const redoBtn = this.containerEl.querySelector("#redo-button") as HTMLButtonElement;
+		if (undoBtn) {
+			undoBtn.disabled = !state.canUndo || state.isScanning;
+		}
+		if (redoBtn) {
+			redoBtn.disabled = !state.canRedo || state.isScanning;
+		}
 	}
 
 	private searchOnly() {
@@ -571,6 +598,13 @@ export class FindReplaceComponent {
 				return;
 			}
 
+			const snapshots = await Promise.all(
+				modifications.map(async ({ file, newContent }) => {
+					const before = await this.app.vault.read(file);
+					return { file, before, after: newContent };
+				})
+			);
+
 			await this.fileManager.batchModifyFiles(
 				modifications,
 				(current, total, message) => {
@@ -580,6 +614,9 @@ export class FindReplaceComponent {
 			new Notice(
 				`Successfully updated ${modifications.length} file${modifications.length !== 1 ? "s" : ""}`,
 			);
+
+			const desc = `Replace '${state.regex}' → '${state.replacement}' (${modifications.length} file${modifications.length !== 1 ? "s" : ""})`;
+			this.stateManager.pushHistory({ description: desc, snapshots, timestamp: Date.now() });
 
 			// Refresh file contents to reflect the changes
 			await this.refreshFileContents();
@@ -653,6 +690,12 @@ export class FindReplaceComponent {
 			// Save the modified content
 			await this.fileManager.modifyFile(match.file, newContent);
 
+			this.stateManager.pushHistory({
+				description: `Replace single match in '${match.file.basename}'`,
+				snapshots: [{ file: match.file, before: currentContent, after: newContent }],
+				timestamp: Date.now(),
+			});
+
 			new Notice("Match replaced successfully");
 
 			// Provide visual feedback on success
@@ -682,6 +725,51 @@ export class FindReplaceComponent {
 				button.setText("Replace this");
 				button.disabled = false;
 			}
+		}
+	}
+	private async performUndo() {
+		const entry = this.stateManager.undoHistory();
+		if (!entry) return;
+		this.stateManager.setScanning(true);
+		try {
+			const missing: string[] = [];
+			for (const { file, before } of entry.snapshots) {
+				try {
+					await this.app.vault.modify(file, before);
+				} catch {
+					missing.push(file.path);
+				}
+			}
+			if (missing.length > 0) {
+				new Notice("Some files were deleted and could not be restored.");
+			}
+			await this.refreshFileContents();
+			void this.performScan();
+		} finally {
+			this.stateManager.setScanning(false);
+		}
+	}
+
+	private async performRedo() {
+		const entry = this.stateManager.redoHistory();
+		if (!entry) return;
+		this.stateManager.setScanning(true);
+		try {
+			const missing: string[] = [];
+			for (const { file, after } of entry.snapshots) {
+				try {
+					await this.app.vault.modify(file, after);
+				} catch {
+					missing.push(file.path);
+				}
+			}
+			if (missing.length > 0) {
+				new Notice("Some files were deleted and could not be restored.");
+			}
+			await this.refreshFileContents();
+			void this.performScan();
+		} finally {
+			this.stateManager.setScanning(false);
 		}
 	}
 }

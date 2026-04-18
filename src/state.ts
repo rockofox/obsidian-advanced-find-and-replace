@@ -1,5 +1,6 @@
 import { ProcessResult } from "./core/regexProcessor";
 import { FileContent } from "./core/fileManager";
+import { UndoRedoManager, HistoryEntry } from "./core/undoRedoManager";
 
 export interface PluginState {
 	regex: string;
@@ -13,24 +14,34 @@ export interface PluginState {
 	progressCurrent: number;
 	progressTotal: number;
 	progressMessage: string | null;
+	canUndo: boolean;
+	canRedo: boolean;
 }
 
 export class StateManager {
-	private state: PluginState = {
-		regex: "",
-		replacement: "",
-		flags: "g",
-		adjustCase: false,
-		isScanning: false,
-		scanResults: null,
-		fileContents: null,
-		error: null,
-		progressCurrent: 0,
-		progressTotal: 0,
-		progressMessage: null,
-	};
+	private undoRedoManager = new UndoRedoManager();
+
+	private state: PluginState = this.createDefaultState();
 
 	private listeners: Array<(state: PluginState) => void> = [];
+
+	private createDefaultState(): PluginState {
+		return {
+			regex: "",
+			replacement: "",
+			flags: "g",
+			adjustCase: false,
+			isScanning: false,
+			scanResults: null,
+			fileContents: null,
+			error: null,
+			progressCurrent: 0,
+			progressTotal: 0,
+			progressMessage: null,
+			canUndo: false,
+			canRedo: false,
+		};
+	}
 
 	getState(): PluginState {
 		return { ...this.state };
@@ -109,20 +120,33 @@ export class StateManager {
 		}
 	}
 
+	private updateUndoRedoState(): void {
+		this.setState({
+			canUndo: this.undoRedoManager.canUndo(),
+			canRedo: this.undoRedoManager.canRedo(),
+		});
+	}
+
+	pushHistory(entry: HistoryEntry): void {
+		this.undoRedoManager.push(entry);
+		this.updateUndoRedoState();
+	}
+
+	undoHistory(): HistoryEntry | null {
+		const result = this.undoRedoManager.undo();
+		this.updateUndoRedoState();
+		return result;
+	}
+
+	redoHistory(): HistoryEntry | null {
+		const result = this.undoRedoManager.redo();
+		this.updateUndoRedoState();
+		return result;
+	}
+
 	reset(): void {
-		this.state = {
-			regex: "",
-			replacement: "",
-			flags: "g",
-			adjustCase: false,
-			isScanning: false,
-			scanResults: null,
-			fileContents: null,
-			error: null,
-			progressCurrent: 0,
-			progressTotal: 0,
-			progressMessage: null,
-		};
+		this.undoRedoManager.clear();
+		this.state = this.createDefaultState();
 		this.notifyListeners();
 	}
 }

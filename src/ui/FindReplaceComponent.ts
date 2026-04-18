@@ -248,7 +248,7 @@ export class FindReplaceComponent {
 		const undoRedoContainer = buttonContainer.createDiv("undo-redo-buttons");
 
 		const undoBtn = undoRedoContainer.createEl("button", {
-			text: "↩ Undo",
+			text: "Undo",
 			cls: "undo-btn",
 		});
 		undoBtn.id = "undo-button";
@@ -256,7 +256,7 @@ export class FindReplaceComponent {
 		undoBtn.onclick = () => void this.performUndo();
 
 		const redoBtn = undoRedoContainer.createEl("button", {
-			text: "↪ Redo",
+			text: "Redo",
 			cls: "redo-btn",
 		});
 		redoBtn.id = "redo-button";
